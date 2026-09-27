@@ -1,12 +1,42 @@
-"""Small checks for Tasks 1–5. Run with: python3 Check.py"""
+"""Small checks for Tasks 1–7. Run with: python3 Check.py"""
 
 import unittest
 
 from Game import constants as board
 from Game.models import Color, GameState, Piece, Player, initial_state
-
+from Game.dice import Dice
 
 class FoundationChecks(unittest.TestCase):
+    def test_dice(self):
+        """Dice stay within 1–6 and repeat a sequence when seeds match."""
+        first, second = Dice(42), Dice(42)
+        rolls = [first.roll() for _ in range(100)]
+        self.assertTrue(all(1 <= roll <= 6 for roll in rolls))
+        self.assertEqual(rolls, [second.roll() for _ in range(100)])
+
+    def test_destinations(self):
+        """Check release, normal movement, home entry, finish, and overshoot."""
+        from Game.rules import destination_for_roll
+
+        cases = [(0, 6, 1), (0, 3, None), (10, 4, 14), (51, 1, 52),
+                 (55, 2, 57), (56, 2, None), (57, 1, None)]
+        for position, roll, expected in cases:
+            with self.subTest(position=position, roll=roll):
+                self.assertEqual(destination_for_roll(position, roll), expected)
+
+    def test_invalid_movement_inputs(self):
+        """Bad types and out-of-range positions/rolls must be rejected."""
+        from Game.rules import destination_for_roll
+
+        for position, roll in [(True, 1), (1, True), (1.5, 2), (1, 2.5), ("1", 2)]:
+            with self.subTest(position=position, roll=roll):
+                with self.assertRaises(TypeError):
+                    destination_for_roll(position, roll)
+        for position, roll in [(-1, 1), (58, 1), (1, 0), (1, 7)]:
+            with self.subTest(position=position, roll=roll):
+                with self.assertRaises(ValueError):
+                    destination_for_roll(position, roll)
+
     def test_board_constants(self):
         """The chosen route has 51 shared positions and five private positions."""
         self.assertEqual((board.YARD, board.TRACK_START, board.TRACK_END), (0, 1, 51))
