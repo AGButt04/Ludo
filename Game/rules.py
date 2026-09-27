@@ -1,4 +1,5 @@
-from Game.constants import YARD, TRACK_START, FINISHED
+from Game.constants import YARD, TRACK_START, FINISHED, TRACK_END, TRACK_LENGTH, START_SQUARES
+from Game.models import Color
 
 def destination_for_roll(position: int, dice_roll: int):
     if type(position) is not int or type(dice_roll) is not int:
@@ -18,3 +19,17 @@ def destination_for_roll(position: int, dice_roll: int):
     else:
         new_pos = position + dice_roll
         return new_pos if (new_pos <= FINISHED) else None
+
+
+def to_absolute(color: Color, position: int) -> int | None:
+    if not isinstance(color, Color) or type(position) is not int:
+        raise TypeError("The type of color should be Color and position be int.")
+    
+    if position < YARD or position > FINISHED:
+        raise ValueError(f"The Value must be in between {YARD} and {FINISHED}.")
+
+    if position < TRACK_START or position > TRACK_END:
+        return None
+    
+    start = START_SQUARES[color]
+    return ((start - 1 + position - 1) % TRACK_LENGTH) + 1

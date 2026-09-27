@@ -1,4 +1,7 @@
-"""Small checks for Tasks 1–7. Run with: python3 Check.py"""
+"""Run the coordinate demo: python3 Check.py
+
+Run all checks when needed: python3 -m unittest Check -v
+"""
 
 import unittest
 
@@ -109,4 +112,15 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    from Game.rules import to_absolute
+
+    # Red and green can reach the same shared square.
+    print("Red at position 14:", to_absolute(Color.RED, 14))  # Expected: 14
+    print("Green at position 1:", to_absolute(Color.GREEN, 1))  # Expected: 14
+
+    # Blue goes past square 52 and wraps to square 1.
+    print("Blue at position 14:", to_absolute(Color.BLUE, 14))  # Expected: 1
+
+    # The yard and home path are not on the shared track.
+    print("Red in the yard:", to_absolute(Color.RED, 0))  # Expected: None
+    print("Red in the home path:", to_absolute(Color.RED, 52))  # Expected: None

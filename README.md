@@ -10,13 +10,16 @@ Investigate how training opponents and reward design affect PPO agents’ learni
 
 - Board constants, piece/player models, and basic game state.
 - Fresh two- and four-player match creation.
-- Automated checks for the implemented foundations.
+- Seeded dice and basic destination calculation.
+- Nine automated checks for the implemented foundations.
 
-Full game rules, seeded dice, PPO training, self-play, and experiment analysis are planned; the simulator is not yet complete.
+Shared-board mapping, full game rules, PPO training, self-play, and experiment analysis are planned; the simulator is not yet complete.
 
 ## Run the checks
 
 Requires Python 3.10 or newer. No third-party packages are needed yet.
+
+From the `Ludo RL` workspace root:
 
 ```bash
 cd "Environment and Implementation"

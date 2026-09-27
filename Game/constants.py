@@ -11,3 +11,5 @@ PIECES_PER_PLAYER = 4 # The number of pieces per player.
 
 # The player only visits 51 shared squares even though there are 52.
 # Because the square right behind the starting square is never visited.
+
+START_SQUARES = (1, 14, 27, 40)
