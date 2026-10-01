@@ -13,3 +13,4 @@ PIECES_PER_PLAYER = 4 # The number of pieces per player.
 # Because the square right behind the starting square is never visited.
 
 START_SQUARES = (1, 14, 27, 40)
+SAFE_SQUARES = (1, 9, 14, 22, 27, 35, 40, 48)

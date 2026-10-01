@@ -1,4 +1,4 @@
-"""Run the coordinate demo: python3 Check.py
+"""Run only the current safe-square check: python3 Check.py
 
 Run all checks when needed: python3 -m unittest Check -v
 """
@@ -112,15 +112,13 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Game.rules import to_absolute
+    from Game.rules import is_safe_square
 
-    # Red and green can reach the same shared square.
-    print("Red at position 14:", to_absolute(Color.RED, 14))  # Expected: 14
-    print("Green at position 1:", to_absolute(Color.GREEN, 1))  # Expected: 14
+    # Safe squares protect pieces from capture.
+    print("Square 1 (expected True):", is_safe_square(1))
+    print("Square 9 (expected True):", is_safe_square(9))
+    print("Square 48 (expected True):", is_safe_square(48))
 
-    # Blue goes past square 52 and wraps to square 1.
-    print("Blue at position 14:", to_absolute(Color.BLUE, 14))  # Expected: 1
-
-    # The yard and home path are not on the shared track.
-    print("Red in the yard:", to_absolute(Color.RED, 0))  # Expected: None
-    print("Red in the home path:", to_absolute(Color.RED, 52))  # Expected: None
+    # Ordinary shared squares are not safe.
+    print("Square 2 (expected False):", is_safe_square(2))
+    print("Square 52 (expected False):", is_safe_square(52))

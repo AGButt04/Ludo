@@ -1,5 +1,5 @@
-from Game.constants import YARD, TRACK_START, FINISHED, TRACK_END, TRACK_LENGTH, START_SQUARES
-from Game.models import Color
+from Game.constants import YARD, TRACK_START, FINISHED, TRACK_END, TRACK_LENGTH, START_SQUARES, SAFE_SQUARES
+from Game.models import Color, GameState, Piece, Player
 
 def destination_for_roll(position: int, dice_roll: int):
     if type(position) is not int or type(dice_roll) is not int:
@@ -33,3 +33,29 @@ def to_absolute(color: Color, position: int) -> int | None:
     
     start = START_SQUARES[color]
     return ((start - 1 + position - 1) % TRACK_LENGTH) + 1
+
+def pieces_at(state: GameState, square: int) -> list[Piece]:
+    if type(square) is not int:
+        raise TypeError("The square position must be an integer.")
+    if not 1 <= square <= TRACK_LENGTH:
+        raise ValueError(f"Square must be between 1 and {TRACK_LENGTH}")
+    
+    pieces = []
+    players = state.players
+
+    for player in players:
+        for piece in player.pieces:
+            pos = to_absolute(player.color, piece.position)
+
+            if pos == square:
+                pieces.append(piece)
+    
+    return pieces
+
+def is_safe_square(square: int) -> bool:
+    if type(square) is not int:
+        raise TypeError("The square position must be an integer.")
+    if not 1 <= square <= TRACK_LENGTH:
+        raise ValueError(f"Square must be between 1 and {TRACK_LENGTH}")
+    
+    return square in SAFE_SQUARES
