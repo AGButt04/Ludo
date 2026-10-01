@@ -36,19 +36,22 @@ These are planning targets, not completion guarantees. Continue one small approv
 
 ## Task 10 — Safe squares and blockades
 
-**Status:** Core rules agreed; edge cases below remain open. Rules are not implemented yet.
+**Status:** Core rules agreed; edge cases below remain open. Safe-square lookup is implemented; blockade movement/enforcement is not.
 
 - Keep red as shared square 1. Safe squares are `1, 9, 14, 22, 27, 35, 40, 48`. Rotating the numbering by a whole color interval preserves this set.
 - Different players may share safe squares without capture.
 - Two same-player pieces form a blockade. An opposing single piece cannot pass it, including on safe squares. Own pieces may pass their own blockade.
-- A player may split a blockade by moving one of its pieces normally.
+- A player may split a blockade by moving one piece the full rolled distance. Splitting never grants a free move; odd rolls can move a single piece but not an intact pair.
 - Moving the pair requires an even roll: 2 → 1 square, 4 → 2, 6 → 3.
+- An intact pair cannot land on another friendly blockade. There may be only one blockade per square.
+- A player must choose a legal move whenever one exists; passing is allowed only when none exists. Splitting is forced only when every available legal move requires it.
+- Example: friendly pairs on squares 3 and 4, roll 2. Pair 3 → 4 is illegal; pair 4 → 5 may move intact if otherwise legal. A single piece may instead split from either pair and move two squares if otherwise legal.
 - Opposing blockades may pass each other. Capturing an opposing pair requires a moving pair to land exactly on its square; both captured pieces return to the yard. Safe-square protection still applies.
 - Board numbering does not decide who starts. The engine must support any participating player starting; seeded random selection versus explicit selection is still to be specified.
 
-**Remaining decisions before pair movement:** How to handle three/four same-color pieces on a square, how pairs enter/finish the private home path, and whether a pair can capture a single piece on an unsafe square. Turn bonuses remain undecided.
+**Remaining decisions before pair movement:** Whether a single piece may land on a friendly blockade (creating a three-piece stack), how opposing pairs coexist on safe squares under the one-blockade limit, how pairs enter/finish the private home path, and whether a pair can capture a single piece on an unsafe square. Turn bonuses remain undecided.
 
-**Next coding step:** Add safe-square constants and a lookup helper, then blockade detection. Moving pairs will require an action that identifies two pieces, rather than only a single piece ID.
+**Next coding step:** Blockade detection using the completed occupancy/count helpers. Moving pairs will require an action that identifies two pieces, rather than only a single piece ID.
 
 ## Task 11 — Identify safe squares
 
@@ -68,3 +71,22 @@ These are planning targets, not completion guarantees. Continue one small approv
 **Connection:** This takes an absolute shared-square number, not relative progress. Later, convert a piece's position using `to_absolute()` first; do not pass `None` into this helper. Safety prevents captures, not blockade obstruction.
 
 **Completion log:** All 52 shared squares and invalid type/range inputs checked successfully. Nine existing tests also passed. `Check.py` now prints only the safe-square examples. Blockade detection comes next.
+
+## Task 12 — Count a player's pieces on a square
+
+**Status:** Complete. **File:** `Game/rules.py`.
+
+**Purpose:** Distinguish two pieces belonging to one player from two pieces belonging to different players—the basis of blockade detection.
+
+**Steps:**
+1. Define `count_pieces_at(state: GameState, square: int, player_id: int) -> int`.
+2. Reject non-integer player IDs with `TypeError` and IDs absent from `state.players` with `ValueError`.
+3. Call `pieces_at(state, square)`; it already validates the square.
+4. Start a counter at zero. Loop over the returned pieces and increment it when `piece.player_id == player_id`.
+5. Return the count. Do not change state or exclude safe squares.
+
+**Check:** Two red pieces on square 14 give red a count of 2. One red and one green there give each a count of 1. An empty square gives 0. Non-integer/absent player IDs raise errors.
+
+**Connection:** A same-owner count of 2 identifies the agreed pair. Counting also handles larger stacks without deciding their rules yet; those remain open. Later legal-move checks will distinguish friendly and opposing blockades.
+
+**Completion log:** Counting, mixed ownership, empty squares, invalid IDs/squares, and nonconsecutive participating IDs passed checks. Nine existing tests also passed. No code corrections needed after the indentation fix. `Check.py` now shows only four piece-count examples.

@@ -1,4 +1,4 @@
-"""Run only the current safe-square check: python3 Check.py
+"""Run only the current piece-count check: python3 Check.py
 
 Run all checks when needed: python3 -m unittest Check -v
 """
@@ -112,13 +112,18 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Game.rules import is_safe_square
+    from Game.rules import count_pieces_at
 
-    # Safe squares protect pieces from capture.
-    print("Square 1 (expected True):", is_safe_square(1))
-    print("Square 9 (expected True):", is_safe_square(9))
-    print("Square 48 (expected True):", is_safe_square(48))
+    state = initial_state(4)
 
-    # Ordinary shared squares are not safe.
-    print("Square 2 (expected False):", is_safe_square(2))
-    print("Square 52 (expected False):", is_safe_square(52))
+    # Two red pieces share square 14.
+    state.players[0].pieces[0].position = 14
+    state.players[0].pieces[1].position = 14
+    print("Red on square 14 (expected 2):", count_pieces_at(state, 14, 0))
+
+    # Move one red to the yard and put green on shared square 14.
+    state.players[0].pieces[1].position = board.YARD
+    state.players[1].pieces[0].position = 1
+    print("Red on square 14 (expected 1):", count_pieces_at(state, 14, 0))
+    print("Green on square 14 (expected 1):", count_pieces_at(state, 14, 1))
+    print("Red on empty square 2 (expected 0):", count_pieces_at(state, 2, 0))

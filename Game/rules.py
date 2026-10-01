@@ -59,3 +59,19 @@ def is_safe_square(square: int) -> bool:
         raise ValueError(f"Square must be between 1 and {TRACK_LENGTH}")
     
     return square in SAFE_SQUARES
+
+def count_pieces_at(state: GameState, square: int, player_id: int) -> int:
+    if type(player_id) is not int:
+        raise TypeError("Player ID must be an integer")
+
+    player_ids = [player.player_id for player in state.players]
+    if player_id not in player_ids:
+        raise ValueError("Player is not in this game")
+
+    pieces = pieces_at(state, square)
+    count = 0
+    for piece in pieces:
+        if piece.player_id == player_id:
+            count += 1
+    
+    return count
