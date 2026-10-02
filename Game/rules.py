@@ -75,3 +75,24 @@ def count_pieces_at(state: GameState, square: int, player_id: int) -> int:
             count += 1
     
     return count
+ 
+def shared_path(color: Color, position: int, destination: int) -> list[int]:
+    if not isinstance(color, Color) or type(position) is not int or type(destination) is not int:
+        raise TypeError("The type of color must be Color, position and destination must be int.")
+    
+    if position < YARD or position > FINISHED:
+        raise ValueError(f"The position has to be between {YARD} and {FINISHED}.")
+    if destination < YARD or destination > FINISHED:
+        raise ValueError(f"The destination has to be between {YARD} and {FINISHED}.")
+    if position >= destination:
+        raise ValueError("The position has to be less than the destination.")
+
+    squares = []
+
+    for rel_pos in range(position + 1, destination + 1):
+        abs_pos = to_absolute(color, rel_pos)
+
+        if abs_pos is not None:
+            squares.append(abs_pos)
+    
+    return squares

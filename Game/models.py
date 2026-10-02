@@ -57,6 +57,41 @@ class GameState:
             f"Current Player: {self.current_player().player_id}\n"
             f"Dice Roll: {self.dice_roll}\n"
         )
+
+@dataclass
+class Move:
+    player_id: int
+    piece_ids: tuple[int, ...]
+
+    def __post_init__(self):
+        if type(self.player_id) != int:
+            raise TypeError("Player ID must be an integer")
+
+        if type(self.piece_ids) != tuple:
+            raise TypeError("Piece IDs must be a tuple")
+
+        if not 0 <= self.player_id <= 3:
+            raise ValueError("Player ID must be between 0 and 3")
+        
+        if len(self.piece_ids) not in (1, 2):
+            raise ValueError("A move must select one or two pieces")
+
+        if any(type(piece_id) is not int for piece_id in self.piece_ids):
+            raise TypeError("Each piece ID must be an integer")
+
+        if not all(0 <= piece_id < PIECES_PER_PLAYER for piece_id in self.piece_ids):
+            raise ValueError("Piece IDs must be between 0 and 3")
+
+        if len(set(self.piece_ids)) != len(self.piece_ids):
+            raise ValueError("A move cannot select the same piece twice")
+        
+        
+    def __str__(self) -> str:
+        return (
+            f"Move:\n"
+            f"Player ID: {self.player_id}\n"
+            f"Piece IDs: {self.piece_ids}\n"
+        )
     
 def initial_state(num_players: int) -> 'GameState':
     if type(num_players) != int:

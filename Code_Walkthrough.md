@@ -1,6 +1,6 @@
 # Ludo RL Code Walkthrough
 
-Updated: September 27, 2026. Tasks 1–7 are implemented and checked; the complete game engine is still to come. The source files are authoritative. Work one small section at a time.
+Updated: October 2, 2026. Tasks 1–9, 11, and 12 are implemented and checked; the complete game engine is still to come. The source files are authoritative. Work one small section at a time.
 
 ## 1. Board constants — `Game/constants.py`
 
@@ -11,7 +11,7 @@ Updated: September 27, 2026. Tasks 1–7 are implemented and checked; the comple
 | `52–56` | Private home path |
 | `57` (`FINISHED`) | Finished |
 
-The physical shared track contains 52 squares; a piece's route visits 51. Its route skips the square immediately before its start, consistent with Section II.B of the 2011 paper. Absolute starting squares and color orientation still need confirmation before coordinate mapping.
+The physical shared track contains 52 squares; a piece's route visits 51. Its route skips the square immediately before its start, consistent with Section II.B of the 2011 paper. Implemented starts are red=1, green=14, yellow=27, blue=40.
 
 ## 2. Pieces, colors, and players — `Game/models.py`
 
@@ -80,11 +80,20 @@ assert destination_for_roll(56, 2) is None
 
 This uses six-to-release, exact finish, and no bounce. It does not modify a piece or check captures/blockades. A candidate destination is not yet a fully legal move.
 
+## 6. Shared-board helpers — `Game/rules.py`
+
+- `to_absolute(color, position)` maps progress to a shared square; yard/home/finish return `None`.
+- `pieces_at(state, square)` returns all pieces occupying that absolute square.
+- `is_safe_square(square)` checks the eight safe squares: 1, 9, 14, 22, 27, 35, 40, 48.
+- `count_pieces_at(state, square, player_id)` counts one participating player's occupants.
+
+These helpers do not move pieces or enforce captures/blockades. Agreed rule: opposing single pieces cannot pass a blockade on an unsafe square, but can pass it on a safe square. See Task 10 in the progress log for pair movement and remaining decisions.
+
 ## Checks and next discussion
 
-From this folder, run `python3 Check.py`. Nine unittest methods cover current constants, models, factory, dice, and destination behavior. Passing these checks does not validate the unimplemented game rules.
+From this folder, `python3 Check.py` prints only the current piece-count demo. Run `python3 -m unittest Check -q` for the nine foundation tests. Mapping, occupancy, safety, and counting have also been checked separately; those checks are not all preserved in the unittest suite. Passing these checks does not validate the unimplemented game rules.
 
-Next discussed steps: relative-to-absolute mapping, square occupancy/safety, then legal-move generation. These are not yet assigned tasks or implemented code.
+Next: blockade detection, remaining interaction-rule decisions, and legal-move generation. No complete engine loop or agents are implemented yet.
 
 The eventual engine will apply moves, handle turns/winning, and emit events. Agents choose actions; the RL interface encodes observations and calculates rewards separately from rules.
 

@@ -1,6 +1,6 @@
 # Ludo RL — Project Map
 
-Updated: September 27, 2026. Tasks 1–7 complete; future file organization is flexible.
+Updated: October 2, 2026. Tasks 1–9, 11, and 12 complete; Task 10 records rules with open edge cases; future file organization is flexible.
 
 ## Current files
 
@@ -8,11 +8,11 @@ Inside `Environment and Implementation/`:
 
 | File | Role |
 |---|---|
-| `Game/constants.py` | Relative position boundaries and piece count |
+| `Game/constants.py` | Position boundaries, starts, safe squares, and piece count |
 | `Game/models.py` | Piece, Color, Player, GameState, initial_state |
 | `Game/dice.py` | Private seeded dice generator |
-| `Game/rules.py` | Candidate destination calculation |
-| `Check.py` | Nine small automated tests |
+| `Game/rules.py` | Destinations, coordinate mapping, occupancy, safety, and piece counts |
+| `Check.py` | Nine foundation tests plus a current-task demo |
 | `README.md` | Project introduction and run command |
 | `Code_Walkthrough.md` | Explanation of current code |
 | `Infrastructure_Progress.md` | Task status and checks |
@@ -25,7 +25,7 @@ There are seven main subfolders: `Game`, `Agents`, `RL`, `Experiments`, `Configs
 
 | Folder | Planned responsibilities |
 |---|---|
-| `Game/` | Extend rules with mapping/interactions/legal moves; add engine and events |
+| `Game/` | Extend rules with interactions/legal moves; add engine and events |
 | `Agents/` | Common interface, random player, heuristic players |
 | `RL/` | Environment wrapper, observations, rewards, PPO and self-play training |
 | `Experiments/` | Run configurations, evaluate policies, analyze metrics |
@@ -47,4 +47,4 @@ Planned: configuration → training → RL interface → game engine
 
 The engine will coordinate the current components, enforce rules, and record events. Rewards belong in the RL layer. No complete game loop exists yet.
 
-Next discussion: confirm shared-board coordinates and mapping, then occupancy/safe squares and legal moves. Continue one approved task at a time, with tests. A complete random-agent game comes before PPO.
+Next discussion: blockade detection and remaining interaction rules, then legal moves. Continue one approved task at a time, with tests. A complete random-agent game comes before PPO.

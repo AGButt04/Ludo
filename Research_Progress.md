@@ -1,6 +1,6 @@
 # Ludo RL — Research Progress
 
-Updated: September 27, 2026
+Updated: October 2, 2026
 
 ## Project direction
 
@@ -92,7 +92,7 @@ Keep the PPO implementation, network architecture, board representation, rules, 
 
 ## Current progress and next steps
 
-- **Completed:** Initial review of four Ludo papers and candidate-question refinement. Infrastructure Tasks 1–7 implemented: constants, models, fresh matches, seeded dice, and candidate destinations. Nine automated tests pass.
+- **Completed:** Initial review of four Ludo papers and candidate-question refinement. Infrastructure now includes constants, models, fresh matches, seeded dice, destinations, shared-board mapping, occupancy, safety, and piece counts. Foundation tests and targeted helper checks pass.
 - **Not yet completed:** Broader novelty search, complete validated game engine, or training experiments.
-- **Next engineering step:** Confirm absolute starting squares/color order, then map relative progress to shared squares. Safe squares, blockades, legal moves, and turn handling follow after rule decisions.
+- **Next engineering step:** Implement blockade detection, resolve remaining rule edge cases, then build legal moves and turn handling.
 - **Advisor direction:** The minimum deliverable is a working research platform. Build and validate infrastructure during Fall; use Spring for experiments and research findings. Novelty, baselines, behavior measurements, and the two-player pilot remain discussion topics.

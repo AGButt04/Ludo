@@ -1,4 +1,4 @@
-"""Run only the current piece-count check: python3 Check.py
+"""Run only the current shared-path demo: python3 Check.py
 
 Run all checks when needed: python3 -m unittest Check -v
 """
@@ -112,18 +112,10 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Game.rules import count_pieces_at
+    from Game.rules import shared_path
 
-    state = initial_state(4)
-
-    # Two red pieces share square 14.
-    state.players[0].pieces[0].position = 14
-    state.players[0].pieces[1].position = 14
-    print("Red on square 14 (expected 2):", count_pieces_at(state, 14, 0))
-
-    # Move one red to the yard and put green on shared square 14.
-    state.players[0].pieces[1].position = board.YARD
-    state.players[1].pieces[0].position = 1
-    print("Red on square 14 (expected 1):", count_pieces_at(state, 14, 0))
-    print("Green on square 14 (expected 1):", count_pieces_at(state, 14, 1))
-    print("Red on empty square 2 (expected 0):", count_pieces_at(state, 2, 0))
+    print("Red 3 → 5 (expected [4, 5]):", shared_path(Color.RED, 3, 5))
+    print("Blue 12 → 15 (expected [52, 1, 2]):", shared_path(Color.BLUE, 12, 15))
+    print("Red 50 → 54 (expected [51]):", shared_path(Color.RED, 50, 54))
+    print("Red 52 → 54 (expected []):", shared_path(Color.RED, 52, 54))
+    print("Red 0 → 1 (expected [1]):", shared_path(Color.RED, 0, 1))
