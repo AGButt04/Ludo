@@ -87,7 +87,7 @@ This uses six-to-release, exact finish, and no bounce. It does not modify a piec
 - `is_safe_square(square)` checks the eight safe squares: 1, 9, 14, 22, 27, 35, 40, 48.
 - `count_pieces_at(state, square, player_id)` counts one participating player's occupants.
 
-These helpers do not move pieces or enforce captures/blockades. Agreed rule: opposing single pieces cannot pass a blockade on an unsafe square, but can pass it on a safe square. See Task 10 in the progress log for pair movement and remaining decisions.
+These helpers do not move pieces or enforce captures/blockades. Agreed rule: opposing single pieces cannot pass a blockade on an unsafe square, but can pass it on a safe square. See [RULES.md](RULES.md) for pair movement and remaining decisions.
 
 ## Checks and next discussion
 

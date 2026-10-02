@@ -96,3 +96,48 @@ def shared_path(color: Color, position: int, destination: int) -> list[int]:
             squares.append(abs_pos)
     
     return squares
+
+def has_blockade(state: GameState, square: int, player_id: int) -> bool:
+    count = count_pieces_at(state, square, player_id)
+
+    if count > 2:
+        raise ValueError("Stacks larger than two are not supported yet")
+
+    return count == 2
+
+def opponent_blockade_at(state: GameState, square: int, player_id: int) -> bool:
+    # For validation purposes.
+    count_pieces_at(state, square, player_id)
+
+    exist = False
+    for player in state.players:
+        if player.player_id == player_id:
+            continue
+        
+        if has_blockade(state, square, player.player_id):
+            exist = True
+            break
+    
+    return exist
+
+def single_path_blocked(state: GameState, player_id: int, position: int, destination: int) -> bool:
+    if type(player_id) is not int or type(position) is not int or type(destination) is not int:
+        raise TypeError("The type of player_id, position and destination must be int.")
+    
+    player_ids = [player.player_id for player in state.players]
+    if player_id not in player_ids:
+        raise ValueError("Player is not in this game")
+    
+    for player in state.players:
+        if player.player_id == player_id:
+            moving_player = player
+            break
+    
+    squares = shared_path(moving_player.color, position, destination)
+    for square in squares:
+        if is_safe_square(square):
+            continue
+        if opponent_blockade_at(state, square, player_id):
+            return True
+    
+    return False

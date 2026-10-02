@@ -96,3 +96,5 @@ Keep the PPO implementation, network architecture, board representation, rules, 
 - **Not yet completed:** Broader novelty search, complete validated game engine, or training experiments.
 - **Next engineering step:** Implement blockade detection, resolve remaining rule edge cases, then build legal moves and turn handling.
 - **Advisor direction:** The minimum deliverable is a working research platform. Build and validate infrastructure during Fall; use Spring for experiments and research findings. Novelty, baselines, behavior measurements, and the two-player pilot remain discussion topics.
+
+**Infrastructure targets (tentative):** October—complete random-agent games; November—heuristic agents and logs; December—verification, fixes, and demonstration before January 2027.

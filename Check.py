@@ -1,4 +1,4 @@
-"""Run only the current shared-path demo: python3 Check.py
+"""Run only the current path-blocking demo: python3 Check.py
 
 Run all checks when needed: python3 -m unittest Check -v
 """
@@ -112,10 +112,17 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Game.rules import shared_path
+    from Game.rules import opponent_blockade_at, single_path_blocked
 
-    print("Red 3 → 5 (expected [4, 5]):", shared_path(Color.RED, 3, 5))
-    print("Blue 12 → 15 (expected [52, 1, 2]):", shared_path(Color.BLUE, 12, 15))
-    print("Red 50 → 54 (expected [51]):", shared_path(Color.RED, 50, 54))
-    print("Red 52 → 54 (expected []):", shared_path(Color.RED, 52, 54))
-    print("Red 0 → 1 (expected [1]):", shared_path(Color.RED, 0, 1))
+    state = initial_state(4)
+    # Green relative 43 maps to shared square 4, an unsafe square.
+    state.players[1].pieces[0].position = 43
+    state.players[1].pieces[1].position = 43
+    print("Opponent pair on 4 (expected True):", opponent_blockade_at(state, 4, 0))
+    print("Red 2 → 5 blocked (expected True):", single_path_blocked(state, 0, 2, 5))
+
+    # Green relative 1 maps to safe square 14: the pair is passable.
+    state.players[1].pieces[0].position = 1
+    state.players[1].pieces[1].position = 1
+    print("Opponent pair on 14 (expected True):", opponent_blockade_at(state, 14, 0))
+    print("Red 12 → 15 blocked (expected False):", single_path_blocked(state, 0, 12, 15))
