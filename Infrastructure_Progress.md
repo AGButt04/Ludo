@@ -56,7 +56,7 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 
 ## Task 17 — Generate legal choices for a roll
 
-**Status:** In progress: `move_destination()` verified; `can_land()` and `legal_moves()` remain. **File:** `Game/rules.py`. Import `Move` from `Game.models`.
+**Status:** Complete: all three methods implemented and checked. **File:** `Game/rules.py`. Import `Move` from `Game.models`.
 
 **Purpose:** Combine our helpers into the actual single/pair choices available to the current player. See [RULES.md](RULES.md) for the agreed variant.
 
@@ -84,8 +84,6 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 - For singles, reject `single_path_blocked(...)`. Pairs may pass opposing pairs, so do not apply the single-piece restriction to them.
 - Keep candidates passing `can_land()`. Return the list; `[]` means no legal move. Do not change state or add a voluntary pass action.
 
-**Check:** Yard release; odd/even pair rolls; splitting; opposing unsafe blockade; safe-square coexistence; no third friendly piece; pair-versus-single landing rejection; pair capture eligibility; exact home finishing; and unchanged state. We will add a short current-task demo after review.
+**Check:** Yard release; odd/even pair rolls; splitting; opposing unsafe blockade; safe-square coexistence; no third friendly piece; pair-versus-single landing rejection; pair capture eligibility; exact home finishing; and unchanged state. `python3 Check.py` shows the three legal choices for a pair at position 10 with roll 4.
 
-**Progress:** `move_destination()` passed checks for release, splitting, all pair rolls, separated pieces, home entry, finishing/overshoot, missing IDs, invalid inputs, and unchanged state. Nine foundation tests passed. No corrections needed.
-
-**Task 17 refactor (October 3):** Added reusable integer-range, roll, relative-position, square, and color validators in `Game/rules.py`, plus `get_player()` and `get_move_pieces()`. Existing rule methods reuse these helpers. `can_land()` now has shared validation (destination 1–57); its landing logic remains unfinished. Fourteen tests pass via `python3 -m unittest Check Tests.test_rules_validation -q`. `python3 Check.py` still runs only the short current-task demo.
+**Completion:** Shared validators and ID lookup helpers support all three methods. Fixed pair IDs (`piece_id`), landing-check indentation, and returning `moves` rather than `move`. Twenty tests pass, covering foundation rules, validation, legal choices, and unchanged state. Run the full checks with `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves -q`. These methods list choices; applying moves and advancing turns come later.

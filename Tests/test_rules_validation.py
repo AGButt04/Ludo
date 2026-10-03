@@ -83,8 +83,8 @@ class RulesValidationChecks(unittest.TestCase):
         with self.assertRaises(ValueError):
             rules.move_destination(state, single, 7)
 
-    def test_unfinished_landing_validation(self):
-        """Only validate the stub's inputs; landing logic is not implemented."""
+    def test_landing_validation(self):
+        """Reject invalid destinations and absent players."""
         state = initial_state(2)
         with self.assertRaises(ValueError):
             rules.can_land(state, Move(0, (0,)), 0)

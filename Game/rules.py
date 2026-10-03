@@ -1,6 +1,6 @@
-from Game.constants import YARD, TRACK_START, FINISHED, TRACK_END, TRACK_LENGTH, START_SQUARES, SAFE_SQUARES
+from Game.constants import YARD, TRACK_START, FINISHED, TRACK_END, TRACK_LENGTH, START_SQUARES, SAFE_SQUARES, HOME_START, HOME_END
 from Game.models import Color, GameState, Piece, Player, Move
-
+from itertools import combinations
 
 def validate_int_range(value: int, minimum: int, maximum: int, name: str) -> None:
     """Reject non-integers (including booleans) and out-of-range values."""
@@ -42,13 +42,17 @@ def get_move_pieces(state: GameState, move: Move) -> tuple[Player, list[Piece]]:
     """Resolve a Move to its player and selected pieces; do not change state."""
     if not isinstance(move, Move):
         raise TypeError("Move must be a Move")
+
     player = get_player(state, move.player_id)
     selected_pieces = []
+
     for piece in player.pieces:
         if piece.piece_id in move.piece_ids:
             selected_pieces.append(piece)
+
     if len(selected_pieces) != len(move.piece_ids):
         raise ValueError("Not all selected pieces were found")
+    
     return player, selected_pieces
 
 def destination_for_roll(position: int, dice_roll: int):
@@ -109,6 +113,7 @@ def shared_path(color: Color, position: int, destination: int) -> list[int]:
     validate_color(color)
     validate_position(position)
     validate_position(destination)
+    
     if position >= destination:
         raise ValueError("The position has to be less than the destination.")
 
@@ -179,4 +184,72 @@ def move_destination(state: GameState, move: Move, dice_roll: int) -> int | None
 def can_land(state: GameState, move: Move, destination: int) -> bool:
     player, selected_pieces = get_move_pieces(state, move)
     validate_int_range(destination, TRACK_START, FINISHED, "Destination")
-    # Landing rules are the next part of Task 17; not implemented yet.
+    
+    if destination == FINISHED:
+        return True
+    
+    own_count = 0
+    for piece in player.pieces:
+        if piece.piece_id not in move.piece_ids:
+            if piece.position == destination:
+                own_count += 1
+    
+    if own_count + len(selected_pieces) > 2:
+        return False
+    
+    if HOME_START <= destination <= HOME_END:
+        return True
+    
+    square = to_absolute(player.color, destination)
+    if is_safe_square(square):
+        return True
+    
+    pieces_at_square = pieces_at(state, square)
+    opponents_at_square = []
+    for piece in pieces_at_square:
+        if piece.player_id != player.player_id:
+            opponents_at_square.append(piece)
+    
+    if len(opponents_at_square) == 0:
+        return True
+    
+    return len(selected_pieces) == len(opponents_at_square)
+
+def legal_moves(state: GameState, dice_roll: int) -> list[Move]:
+    validate_roll(dice_roll)
+
+    player = state.current_player()
+    moves = []
+    candidates = []
+
+    for piece in player.pieces:
+        candidates.append(Move(player.player_id, (piece.piece_id, )))
+    
+    for first, second in combinations(player.pieces, 2):
+        if first.position == second.position:
+            if first.position not in (YARD, FINISHED):
+                candidates.append(
+                    Move(player.player_id, (first.piece_id, second.piece_id))
+                )
+    
+    for move in candidates:
+        # Where would those pieces go with this roll?
+        destination = move_destination(state, move, dice_roll)
+        
+        if destination is None:
+            continue
+        
+        if len(move.piece_ids) == 1:
+            # Which pieces does this move refer to?
+            _, selected = get_move_pieces(state, move)
+            position = selected[0].position
+
+            # If moving one piece, is there a blockade in this path?
+            if single_path_blocked(state, player.player_id, position, destination):
+                continue
+
+        # Can those piece occupy the destination?
+        if can_land(state, move, destination):
+            moves.append(move)
+
+    return moves

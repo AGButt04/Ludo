@@ -113,13 +113,12 @@ class FoundationChecks(unittest.TestCase):
 
 if __name__ == "__main__":
     from Game.models import Move
-    from Game.rules import move_destination
+    from Game.rules import legal_moves, move_destination
 
     state = initial_state(4)
     state.players[0].pieces[0].position = 10
     state.players[0].pieces[1].position = 10
 
-    print("Split with roll 4 (expected 14):", move_destination(state, Move(0, (0,)), 4))
-    print("Pair with roll 4 (expected 12):", move_destination(state, Move(0, (0, 1)), 4))
-    print("Pair with roll 3 (expected None):", move_destination(state, Move(0, (0, 1)), 3))
-    print("Original position (still 10):", state.players[0].pieces[0].position)
+    print("Red pieces 0 and 1 are at position 10. Roll: 4")
+    for move in legal_moves(state, 4):
+        print("Pieces:", move.piece_ids, "-> destination:", move_destination(state, move, 4))
