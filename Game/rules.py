@@ -1,15 +1,60 @@
 from Game.constants import YARD, TRACK_START, FINISHED, TRACK_END, TRACK_LENGTH, START_SQUARES, SAFE_SQUARES
-from Game.models import Color, GameState, Piece, Player
+from Game.models import Color, GameState, Piece, Player, Move
+
+
+def validate_int_range(value: int, minimum: int, maximum: int, name: str) -> None:
+    """Reject non-integers (including booleans) and out-of-range values."""
+    if type(value) is not int:
+        raise TypeError(f"{name} must be an integer")
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} must be between {minimum} and {maximum}")
+
+
+def validate_roll(dice_roll: int) -> None:
+    validate_int_range(dice_roll, 1, 6, "Dice roll")
+
+
+def validate_position(position: int) -> None:
+    """Relative progress includes yard, home path, and finish."""
+    validate_int_range(position, YARD, FINISHED, "Position")
+
+
+def validate_square(square: int) -> None:
+    """Absolute squares belong only to the shared track."""
+    validate_int_range(square, 1, TRACK_LENGTH, "Square")
+
+
+def validate_color(color: Color) -> None:
+    if not isinstance(color, Color):
+        raise TypeError("Color must be a Color")
+
+
+def get_player(state: GameState, player_id: int) -> Player:
+    """Find a participant by ID, regardless of seating/list order."""
+    validate_int_range(player_id, 0, 3, "Player ID")
+    for player in state.players:
+        if player.player_id == player_id:
+            return player
+    raise ValueError("Player is not in this game")
+
+
+def get_move_pieces(state: GameState, move: Move) -> tuple[Player, list[Piece]]:
+    """Resolve a Move to its player and selected pieces; do not change state."""
+    if not isinstance(move, Move):
+        raise TypeError("Move must be a Move")
+    player = get_player(state, move.player_id)
+    selected_pieces = []
+    for piece in player.pieces:
+        if piece.piece_id in move.piece_ids:
+            selected_pieces.append(piece)
+    if len(selected_pieces) != len(move.piece_ids):
+        raise ValueError("Not all selected pieces were found")
+    return player, selected_pieces
 
 def destination_for_roll(position: int, dice_roll: int):
-    if type(position) is not int or type(dice_roll) is not int:
-        raise TypeError("The type of the dice_roll and position has to be an integer.")
-    
-    if not YARD <= position <= FINISHED:
-        raise ValueError("The position has to be between 0 and 57.")
-    if not 1 <= dice_roll <= 6:
-        raise ValueError("The dice roll has to be between 1 and 6.")
-    
+    validate_position(position)
+    validate_roll(dice_roll)
+
     if position == 0 and dice_roll == 6:
         return TRACK_START
     elif position == 0:
@@ -22,11 +67,8 @@ def destination_for_roll(position: int, dice_roll: int):
 
 
 def to_absolute(color: Color, position: int) -> int | None:
-    if not isinstance(color, Color) or type(position) is not int:
-        raise TypeError("The type of color should be Color and position be int.")
-    
-    if position < YARD or position > FINISHED:
-        raise ValueError(f"The Value must be in between {YARD} and {FINISHED}.")
+    validate_color(color)
+    validate_position(position)
 
     if position < TRACK_START or position > TRACK_END:
         return None
@@ -35,11 +77,7 @@ def to_absolute(color: Color, position: int) -> int | None:
     return ((start - 1 + position - 1) % TRACK_LENGTH) + 1
 
 def pieces_at(state: GameState, square: int) -> list[Piece]:
-    if type(square) is not int:
-        raise TypeError("The square position must be an integer.")
-    if not 1 <= square <= TRACK_LENGTH:
-        raise ValueError(f"Square must be between 1 and {TRACK_LENGTH}")
-    
+    validate_square(square)
     pieces = []
     players = state.players
 
@@ -53,20 +91,11 @@ def pieces_at(state: GameState, square: int) -> list[Piece]:
     return pieces
 
 def is_safe_square(square: int) -> bool:
-    if type(square) is not int:
-        raise TypeError("The square position must be an integer.")
-    if not 1 <= square <= TRACK_LENGTH:
-        raise ValueError(f"Square must be between 1 and {TRACK_LENGTH}")
-    
+    validate_square(square)
     return square in SAFE_SQUARES
 
 def count_pieces_at(state: GameState, square: int, player_id: int) -> int:
-    if type(player_id) is not int:
-        raise TypeError("Player ID must be an integer")
-
-    player_ids = [player.player_id for player in state.players]
-    if player_id not in player_ids:
-        raise ValueError("Player is not in this game")
+    get_player(state, player_id)
 
     pieces = pieces_at(state, square)
     count = 0
@@ -77,13 +106,9 @@ def count_pieces_at(state: GameState, square: int, player_id: int) -> int:
     return count
  
 def shared_path(color: Color, position: int, destination: int) -> list[int]:
-    if not isinstance(color, Color) or type(position) is not int or type(destination) is not int:
-        raise TypeError("The type of color must be Color, position and destination must be int.")
-    
-    if position < YARD or position > FINISHED:
-        raise ValueError(f"The position has to be between {YARD} and {FINISHED}.")
-    if destination < YARD or destination > FINISHED:
-        raise ValueError(f"The destination has to be between {YARD} and {FINISHED}.")
+    validate_color(color)
+    validate_position(position)
+    validate_position(destination)
     if position >= destination:
         raise ValueError("The position has to be less than the destination.")
 
@@ -106,8 +131,8 @@ def has_blockade(state: GameState, square: int, player_id: int) -> bool:
     return count == 2
 
 def opponent_blockade_at(state: GameState, square: int, player_id: int) -> bool:
-    # For validation purposes.
-    count_pieces_at(state, square, player_id)
+    get_player(state, player_id)
+    validate_square(square)
 
     exist = False
     for player in state.players:
@@ -121,18 +146,8 @@ def opponent_blockade_at(state: GameState, square: int, player_id: int) -> bool:
     return exist
 
 def single_path_blocked(state: GameState, player_id: int, position: int, destination: int) -> bool:
-    if type(player_id) is not int or type(position) is not int or type(destination) is not int:
-        raise TypeError("The type of player_id, position and destination must be int.")
-    
-    player_ids = [player.player_id for player in state.players]
-    if player_id not in player_ids:
-        raise ValueError("Player is not in this game")
-    
-    for player in state.players:
-        if player.player_id == player_id:
-            moving_player = player
-            break
-    
+    moving_player = get_player(state, player_id)
+
     squares = shared_path(moving_player.color, position, destination)
     for square in squares:
         if is_safe_square(square):
@@ -141,3 +156,27 @@ def single_path_blocked(state: GameState, player_id: int, position: int, destina
             return True
     
     return False
+
+def move_destination(state: GameState, move: Move, dice_roll: int) -> int | None:
+    validate_roll(dice_roll)
+    player, selected_pieces = get_move_pieces(state, move)
+
+    if len(selected_pieces) == 1:
+        return destination_for_roll(selected_pieces[0].position, dice_roll)
+    else:
+        first, second = selected_pieces
+
+        if first.position != second.position:
+            return None
+        if first.position in (YARD, FINISHED):
+            return None
+        if dice_roll % 2 != 0:
+            return None
+        
+        destination = first.position + dice_roll // 2
+        return destination if destination <= FINISHED else None
+
+def can_land(state: GameState, move: Move, destination: int) -> bool:
+    player, selected_pieces = get_move_pieces(state, move)
+    validate_int_range(destination, TRACK_START, FINISHED, "Destination")
+    # Landing rules are the next part of Task 17; not implemented yet.

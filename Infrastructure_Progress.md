@@ -53,3 +53,39 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 **Scope:** Single-piece path obstruction only. `False` does not mean a fully legal move: dice, ownership of the selected piece, landing capacity, and capture checks come later. Do not use this function for moving pairs; they can pass opposing blockades. Existing guards still reject unsupported stacks larger than two when inspected.
 
 **Completion log:** Fixed boolean-ID acceptance and ID-as-index lookup; safe squares are now skipped before blockade checks. Blocked paths/landings, friendly pairs, safe squares, home paths, reordered/nonconsecutive IDs, and invalid inputs passed checks. Nine foundation tests also passed. `Check.py` displays four current-task examples.
+
+## Task 17 — Generate legal choices for a roll
+
+**Status:** In progress: `move_destination()` verified; `can_land()` and `legal_moves()` remain. **File:** `Game/rules.py`. Import `Move` from `Game.models`.
+
+**Purpose:** Combine our helpers into the actual single/pair choices available to the current player. See [RULES.md](RULES.md) for the agreed variant.
+
+### 1. `move_destination(state: GameState, move: Move, dice_roll: int) -> int | None`
+
+- Validate an integer roll in 1–6. Find the player and selected pieces by their IDs, not list indexes; reject missing IDs with `ValueError`.
+- One piece: reuse `destination_for_roll()`.
+- Two pieces: require equal relative positions, outside yard/finish, and an even roll. Otherwise return `None`.
+- For a valid pair, add `dice_roll // 2` to its position. Return `None` for overshoot, otherwise the destination. Pairs can enter/move through the home path and finish together.
+
+### 2. `can_land(state: GameState, move: Move, destination: int) -> bool`
+
+- Validate the move's player/pieces and an integer destination in `TRACK_START`–`FINISHED`.
+- Finish: return `True`; all four pieces may finish.
+- Count the owner's other pieces at the relative destination, excluding selected pieces. If that count plus the number moving exceeds two, return `False`. Apply this to track and private home-path squares.
+- Private home path: after that capacity check, return `True`.
+- Shared track: convert to an absolute square. Safe square: return `True` after the own-capacity check, regardless of other colors.
+- Unsafe square: no opponent means `True`; a single may land on one opposing single; a pair may land on an opposing pair. Single-versus-pair and pair-versus-single landings return `False`. Nothing is captured yet.
+
+### 3. `legal_moves(state: GameState, dice_roll: int) -> list[Move]`
+
+- Validate the roll before looping. Use `state.current_player()`.
+- Make candidates for each single piece and each distinct pair sharing a non-yard, non-finished relative position. Generate each pair once (for example, piece ID 0 with 1, not also 1 with 0).
+- Get each candidate's destination. Skip `None`.
+- For singles, reject `single_path_blocked(...)`. Pairs may pass opposing pairs, so do not apply the single-piece restriction to them.
+- Keep candidates passing `can_land()`. Return the list; `[]` means no legal move. Do not change state or add a voluntary pass action.
+
+**Check:** Yard release; odd/even pair rolls; splitting; opposing unsafe blockade; safe-square coexistence; no third friendly piece; pair-versus-single landing rejection; pair capture eligibility; exact home finishing; and unchanged state. We will add a short current-task demo after review.
+
+**Progress:** `move_destination()` passed checks for release, splitting, all pair rolls, separated pieces, home entry, finishing/overshoot, missing IDs, invalid inputs, and unchanged state. Nine foundation tests passed. No corrections needed.
+
+**Task 17 refactor (October 3):** Added reusable integer-range, roll, relative-position, square, and color validators in `Game/rules.py`, plus `get_player()` and `get_move_pieces()`. Existing rule methods reuse these helpers. `can_land()` now has shared validation (destination 1–57); its landing logic remains unfinished. Fourteen tests pass via `python3 -m unittest Check Tests.test_rules_validation -q`. `python3 Check.py` still runs only the short current-task demo.

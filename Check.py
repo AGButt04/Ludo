@@ -1,4 +1,4 @@
-"""Run only the current path-blocking demo: python3 Check.py
+"""Run only the current move-destination demo: python3 Check.py
 
 Run all checks when needed: python3 -m unittest Check -v
 """
@@ -112,17 +112,14 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Game.rules import opponent_blockade_at, single_path_blocked
+    from Game.models import Move
+    from Game.rules import move_destination
 
     state = initial_state(4)
-    # Green relative 43 maps to shared square 4, an unsafe square.
-    state.players[1].pieces[0].position = 43
-    state.players[1].pieces[1].position = 43
-    print("Opponent pair on 4 (expected True):", opponent_blockade_at(state, 4, 0))
-    print("Red 2 → 5 blocked (expected True):", single_path_blocked(state, 0, 2, 5))
+    state.players[0].pieces[0].position = 10
+    state.players[0].pieces[1].position = 10
 
-    # Green relative 1 maps to safe square 14: the pair is passable.
-    state.players[1].pieces[0].position = 1
-    state.players[1].pieces[1].position = 1
-    print("Opponent pair on 14 (expected True):", opponent_blockade_at(state, 14, 0))
-    print("Red 12 → 15 blocked (expected False):", single_path_blocked(state, 0, 12, 15))
+    print("Split with roll 4 (expected 14):", move_destination(state, Move(0, (0,)), 4))
+    print("Pair with roll 4 (expected 12):", move_destination(state, Move(0, (0, 1)), 4))
+    print("Pair with roll 3 (expected None):", move_destination(state, Move(0, (0, 1)), 3))
+    print("Original position (still 10):", state.players[0].pieces[0].position)

@@ -98,3 +98,9 @@ Next: blockade detection, remaining interaction-rule decisions, and legal-move g
 The eventual engine will apply moves, handle turns/winning, and emit events. Agents choose actions; the RL interface encodes observations and calculates rewards separately from rules.
 
 Track assignments in [Infrastructure_Progress.md](Infrastructure_Progress.md) and research decisions in [Research_Progress.md](Research_Progress.md).
+
+## Shared validation helpers
+
+`Game/rules.py` now centralizes repeated checks: `validate_roll()` (1–6), `validate_position()` (0–57), `validate_square()` (1–52), and `validate_color()`. Numeric checks share `validate_int_range()`. `get_player()` finds participants by ID; `get_move_pieces()` returns the player and selected pieces. Model constructor checks remain in `models.py` to avoid circular imports. Method-specific rules remain with their methods. The unfinished `can_land()` currently validates inputs only.
+
+Full current checks: `python3 -m unittest Check Tests.test_rules_validation -q` (14 tests). The short `Check.py` demo is unchanged.
