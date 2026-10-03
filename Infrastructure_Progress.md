@@ -87,3 +87,32 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 **Check:** Yard release; odd/even pair rolls; splitting; opposing unsafe blockade; safe-square coexistence; no third friendly piece; pair-versus-single landing rejection; pair capture eligibility; exact home finishing; and unchanged state. `python3 Check.py` shows the three legal choices for a pair at position 10 with roll 4.
 
 **Completion:** Shared validators and ID lookup helpers support all three methods. Fixed pair IDs (`piece_id`), landing-check indentation, and returning `moves` rather than `move`. Twenty tests pass, covering foundation rules, validation, legal choices, and unchanged state. Run the full checks with `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves -q`. These methods list choices; applying moves and advancing turns come later.
+
+## Task 18 — Apply a chosen move and detect a winner
+
+**Status:** Complete. `has_won()` and `apply_move()` verified. Moved move validation before reading its fields; movement/capture logic needed no further fixes. All 25 regression tests pass, including captures, safe squares, splitting, finishing, game-over rejection, and unchanged state after rejected moves.
+
+**Purpose:** Turn a legal choice into an actual board change, including captures, then check whether the player has finished.
+
+**Agreed ending:** First winner ends the game. Before applying a move, reject it if `has_won(state, player.player_id)` is true for any player. Full-ranking play is deferred.
+
+### 1. `has_won(state: GameState, player_id: int) -> bool` — `Game/rules.py`
+
+- Find the player with `get_player()`.
+- Return whether all four pieces have position `FINISHED`. Use `all(...)` over the player's pieces.
+
+### 2. `apply_move(state: GameState, move: Move, dice_roll: int) -> None` — new `Game/engine.py`
+
+- Import models/constants and the rule helpers you need; rules must not import engine.
+- Resolve the move using `get_move_pieces()`. Reject a finished game and any choice absent from `legal_moves(state, dice_roll)` with `ValueError`, before changing anything. Compare player IDs and sets of piece IDs so `(0, 1)` and `(1, 0)` mean the same pair.
+- Calculate its destination using `move_destination()`.
+- Convert the destination with `to_absolute()`. If it is a shared, unsafe square, find opposing pieces there with `pieces_at()` and return them to `YARD`. Legality already ensures single-versus-single or pair-versus-pair captures. Safe squares and private home/finish never capture.
+- Set every selected piece's position to the destination. This function changes the supplied state in place and returns nothing.
+
+**Example:** Red at relative 2, green at relative 43 (shared square 4), roll 2: red moves to 4 and green returns to 0. A red pair at 2 needs roll 4 to capture a green pair at square 4.
+
+**Connection:** Roll → `legal_moves()` → player chooses → `apply_move()` → `has_won()`. Keep the current player and stored dice unchanged for now; turn advancement and extra-roll rules are the next task.
+
+**Checks after implementation:** Single/pair captures, safe-square coexistence, splitting leaves the other piece behind, exact finish/win, and rejected moves leave the entire state unchanged. Keep `Check.py` limited to a short current-task example.
+
+**Run:** `python3 Check.py` shows one capture. Full checks: `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine -q`.

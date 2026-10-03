@@ -9,25 +9,20 @@ def validate_int_range(value: int, minimum: int, maximum: int, name: str) -> Non
     if not minimum <= value <= maximum:
         raise ValueError(f"{name} must be between {minimum} and {maximum}")
 
-
 def validate_roll(dice_roll: int) -> None:
     validate_int_range(dice_roll, 1, 6, "Dice roll")
-
 
 def validate_position(position: int) -> None:
     """Relative progress includes yard, home path, and finish."""
     validate_int_range(position, YARD, FINISHED, "Position")
 
-
 def validate_square(square: int) -> None:
     """Absolute squares belong only to the shared track."""
     validate_int_range(square, 1, TRACK_LENGTH, "Square")
 
-
 def validate_color(color: Color) -> None:
     if not isinstance(color, Color):
         raise TypeError("Color must be a Color")
-
 
 def get_player(state: GameState, player_id: int) -> Player:
     """Find a participant by ID, regardless of seating/list order."""
@@ -36,7 +31,6 @@ def get_player(state: GameState, player_id: int) -> Player:
         if player.player_id == player_id:
             return player
     raise ValueError("Player is not in this game")
-
 
 def get_move_pieces(state: GameState, move: Move) -> tuple[Player, list[Piece]]:
     """Resolve a Move to its player and selected pieces; do not change state."""
@@ -68,7 +62,6 @@ def destination_for_roll(position: int, dice_roll: int):
     else:
         new_pos = position + dice_roll
         return new_pos if (new_pos <= FINISHED) else None
-
 
 def to_absolute(color: Color, position: int) -> int | None:
     validate_color(color)
@@ -253,3 +246,8 @@ def legal_moves(state: GameState, dice_roll: int) -> list[Move]:
             moves.append(move)
 
     return moves
+
+def has_won(state: GameState, player_id: int) -> bool:
+    player = get_player(state, player_id)
+
+    return all(piece.position == FINISHED for piece in player.pieces)

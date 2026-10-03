@@ -113,12 +113,15 @@ class FoundationChecks(unittest.TestCase):
 
 if __name__ == "__main__":
     from Game.models import Move
-    from Game.rules import legal_moves, move_destination
+    from Game.engine import apply_move
 
     state = initial_state(4)
-    state.players[0].pieces[0].position = 10
-    state.players[0].pieces[1].position = 10
+    red = state.players[0].pieces[0]
+    green = state.players[1].pieces[0]
+    red.position = 2
+    green.position = 43  # Shared square 4.
 
-    print("Red pieces 0 and 1 are at position 10. Roll: 4")
-    for move in legal_moves(state, 4):
-        print("Pieces:", move.piece_ids, "-> destination:", move_destination(state, move, 4))
+    print("Before: red at 2; green at relative 43 (shared square 4). Roll: 2")
+    apply_move(state, Move(0, (0,)), 2)
+    print("Red position (expected 4):", red.position)
+    print("Green position (expected 0, yard):", green.position)

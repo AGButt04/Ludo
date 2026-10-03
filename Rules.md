@@ -1,6 +1,6 @@
 # Ludo Rules Reference
 
-Agreed variant as of October 2, 2026. These are design decisions, not a claim that all rules are implemented.
+Agreed variant as of October 3, 2026. These are design decisions, not a claim that all rules are implemented.
 
 - Keep red as shared square 1. Safe squares are `1, 9, 14, 22, 27, 35, 40, 48`. Rotating the numbering by a whole color interval preserves this set.
 - Different players may share safe squares without capture.
@@ -14,8 +14,9 @@ Agreed variant as of October 2, 2026. These are design decisions, not a claim th
 - Opposing blockades may pass each other. Capturing an opposing pair requires a moving pair to land exactly on its square; both captured pieces return to the yard. Safe-square protection still applies.
 - An intact pair cannot capture an opposing single piece: landing on that single on an unsafe square is illegal. Splitting the pair and moving one piece may capture the single normally.
 - Pairs may form and move in the private home path and finish together, using half an even roll and exact finishing.
+- The initial engine ends the game immediately when the first player finishes all four pieces. No further moves are allowed. Continuing for second/third/fourth-place rankings is deferred.
 - Board numbering does not decide who starts. The engine must support any participating player starting; seeded random selection versus explicit selection is still to be specified.
 
 **Remaining decisions:** Turn bonuses, consecutive-six handling, starting-player selection, and final two-player seating. Current yard release is one piece on a six, not paired release.
 
-**Implementation boundary:** Mapping, occupancy, safety, counts, shared paths, blockade detection, and single-path obstruction exist. Pair movement, landing enforcement, captures, legal-move generation, and the complete turn loop are not yet implemented. Two-player creation currently selects red and green. `has_blockade()` rejects same-owner shared-square stacks larger than two, consistent with the agreed occupancy limit.
+**Implementation boundary:** Mapping, occupancy, safety, counts, shared paths, blockade detection, single-path obstruction, single/pair destinations, landing checks, legal-move generation, applying moves/captures, and winner detection exist. The complete turn loop remains to be implemented. Two-player creation currently selects red and green. `has_blockade()` rejects same-owner shared-square stacks larger than two, consistent with the agreed occupancy limit.
