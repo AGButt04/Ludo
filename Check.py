@@ -113,15 +113,20 @@ class FoundationChecks(unittest.TestCase):
 
 if __name__ == "__main__":
     from Game.models import Move
-    from Game.engine import apply_move
+    from Game.engine import play_turn
+    from Game.rules import legal_moves
 
     state = initial_state(4)
-    red = state.players[0].pieces[0]
-    green = state.players[1].pieces[0]
-    red.position = 2
-    green.position = 43  # Shared square 4.
+    # Pretend roll_turn() just produced [6, 6, 4].
+    state.dice_roll = 6
+    state.remaining_rolls = [6, 4]
 
-    print("Before: red at 2; green at relative 43 (shared square 4). Roll: 2")
-    apply_move(state, Move(0, (0,)), 2)
-    print("Red position (expected 4):", red.position)
-    print("Green position (expected 0, yard):", green.position)
+    print("Red's rolls: [6, 6, 4]. All pieces start in the yard (0).")
+
+    # Example player choices: release piece 0, release piece 1, then move piece 0.
+    for piece_id in [0, 1, 0]:
+        choices = legal_moves(state, state.dice_roll)
+        print("\nRoll:", state.dice_roll, "| Legal choices:", [move.piece_ids for move in choices])
+        play_turn(state, Move(0, (piece_id,)))
+        print("Chose piece", piece_id, "| Red positions:", [piece.position for piece in state.players[0].pieces])
+        print("Current player:", state.current_player().color.name, "| Next roll:", state.dice_roll)

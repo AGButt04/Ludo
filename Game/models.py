@@ -44,7 +44,10 @@ class Player:
 class GameState:
     players: list[Player]
     current_player_index: int = 0
+    # Holds the current roll
     dice_roll: int | None = None
+    # Holds the rolls still to come
+    remaining_rolls: list[int] = field(default_factory=list)
 
     def current_player(self) -> Player:
         return self.players[self.current_player_index]

@@ -116,3 +116,32 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 **Checks after implementation:** Single/pair captures, safe-square coexistence, splitting leaves the other piece behind, exact finish/win, and rejected moves leave the entire state unchanged. Keep `Check.py` limited to a short current-task example.
 
 **Run:** `python3 Check.py` shows one capture. Full checks: `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine -q`.
+
+## Task 19 — Roll the full sequence, then play it in order
+
+**Status:** Complete. Roll collection and one-choice-at-a-time turn resolution verified. Fixed applying every legal option, forced-pass handling, missing-roll rejection, winner lookup, roll-field references, and player-index advancement. All 34 tests pass. **Files:** `Game/models.py`, `Game/engine.py`.
+
+**Regression command:** `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns -q`.
+
+**Purpose:** Let players see their full turn's rolls, while choosing one legal move at a time. Existing `legal_moves()` and `apply_move()` still handle one roll each.
+
+**State:** Keep `dice_roll` as the current roll to use. Add `remaining_rolls: list[int] = field(default_factory=list)` to `GameState` for the later rolls. Example: sequence `[6, 6, 3]` means `dice_roll = 6`, `remaining_rolls = [6, 3]`. An idle turn has `None` and `[]`. Expose both to human/agent callers; lists must not be shared between states.
+
+### 1. `roll_turn(state: GameState, dice: Dice) -> None`
+- Reject a finished game or any unconsumed rolls before rolling.
+- Collect rolls in a local list using `dice.roll()`. Continue after a six; stop at the first non-six or the third consecutive six.
+- Three sixes: discard the sequence, leave all pieces unchanged, and advance the player once. Keep `dice_roll = None` and `remaining_rolls = []`.
+- Otherwise store the first roll in `dice_roll` and the rest in `remaining_rolls`. Do not move pieces or advance the player yet.
+
+### 2. `play_turn(state: GameState, move: Move | None) -> None`
+- Resolve exactly one stored roll. Reject a finished game or missing `dice_roll`.
+- Compute `legal_moves(state, state.dice_roll)`. Accept `None` only if this list is empty; otherwise require a legal move and use `apply_move()` with the stored roll. Validate before changing state or consuming rolls.
+- After a win, clear both roll fields and stop immediately without advancing the player.
+- Otherwise, if later rolls remain, use `remaining_rolls.pop(0)` as the next `dice_roll`; keep the same player. If none remain, clear `dice_roll` and advance the player once.
+- Advancing means `(state.current_player_index + 1) % len(state.players)`. Do not generate bonus rolls here: the full sequence is already known.
+
+**Rules:** Only six grants another roll, irrespective of available moves. Capturing or finishing adds none. Rolls stay in their original order and cannot be combined. Recompute legal choices after each move; a roll with no legal move is consumed without moving a piece.
+
+**Example:** `[6, 6, 3]` gives three ordered decisions with all remaining rolls visible. `[6, 6, 6]` cancels the entire turn before any movement.
+
+**Checks after implementation:** Fixed dice sequences for ordinary/six/double-six/triple-six turns; no extra dice calls; no reroll while rolls remain; no voluntary pass; forced pass consumes only its roll; invalid choices preserve state; player-index wraparound; independent roll lists; immediate win discards unused rolls. Keep `Check.py` a short demo and add regression tests separately.
