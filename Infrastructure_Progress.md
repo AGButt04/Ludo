@@ -145,3 +145,51 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 **Example:** `[6, 6, 3]` gives three ordered decisions with all remaining rolls visible. `[6, 6, 6]` cancels the entire turn before any movement.
 
 **Checks after implementation:** Fixed dice sequences for ordinary/six/double-six/triple-six turns; no extra dice calls; no reroll while rolls remain; no voluntary pass; forced pass consumes only its roll; invalid choices preserve state; player-index wraparound; independent roll lists; immediate win discards unused rolls. Keep `Check.py` a short demo and add regression tests separately.
+
+## Task 20 — Run a complete game with random agents
+
+**Status:** Complete. Fixed imports, starting-seat assignment/validation, turn-limit validation, and cutoff wording; removed per-move printing. All 38 tests pass, including eight complete runs across two/four-player games, repeatable move traces, different starting seats, and per-move position/occupancy checks. **Purpose:** Replace our hand-picked moves with automatic choices and exercise the engine through complete games before adding heuristics or RL.
+
+### 1. `RandomAgent` — new `Agents/random_agent.py`
+- `__init__(self, seed: int | None = None)`: create a private `random.Random(seed)`, just like `Dice`. Keep agent randomness separate from dice randomness.
+- `choose_move(self, state: GameState, moves: list[Move]) -> Move | None`: return `None` for an empty list; otherwise return `self.rng.choice(moves)`. Never change state. The random agent ignores `state`, but later heuristic agents can use the same interface to inspect the board and remaining rolls.
+
+### 2. `run_game(...)` — new `run_game.py` at the codebase root
+- Suggested signature: `run_game(num_players=4, seed=0, max_turns=10000, starting_player_index=0) -> int | None`. Return the winner's player ID, or `None` if the turn limit is reached. Require a positive integer turn limit and a valid starting index.
+- Create `initial_state(num_players)`, set its starting index, create `Dice(seed)`, and create one `RandomAgent(seed + 1 + player.player_id)` per player in a dictionary keyed by player ID. This explicit start supports any seat; randomized starts and final two-player seating remain separate decisions.
+- Outer loop: start at most `max_turns` full turns with `roll_turn()`. A cancelled three-six turn still counts toward the limit.
+- Inner loop: while `state.dice_roll is not None`, get the current player, calculate `legal_moves()`, ask their agent for a choice, and call `play_turn()`. Recalculate choices for every roll.
+- After each `play_turn()`, check whether the acting player won; return their ID immediately if so. Triple sixes leave no current roll, so the inner loop is skipped automatically.
+- If the limit is exhausted, return `None`: this is a cutoff, not a loss or a declared draw.
+- Under `if __name__ == "__main__":`, call the runner and print just the winner or cutoff message. Test `winner is not None`, because player ID 0 is a valid winner. Run with `python3 run_game.py`.
+
+**Connection:** `roll_turn` → `legal_moves` → agent chooses → `play_turn` → check winner → repeat.
+
+**Checks after implementation:** Agent chooses only supplied moves, empty choices return `None`, and choices do not mutate state. Confirm repeatability with fixed seeds, full games with several seeds, different starting seats, and a deliberate small-limit cutoff. Inspect final winning states and position/occupancy invariants in tests; a completed game alone does not establish engine correctness. Keep full-game output to one summary line.
+
+**Start with:** `RandomAgent`; review it before writing the runner.
+
+**Task 20 verification:** `python3 run_game.py` prints one winner summary. Full suite: `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns Tests.test_runner -q`.
+
+## Task 21 — Audit a complete game, move by move
+
+**Status:** Planned; not yet implemented or reviewed. **Purpose:** Make every turn inspectable and check transitions against our agreed rules before adding stronger agents. Existing tests check positions, occupancy, and repeatability; they are not a complete game audit.
+
+### 1. Record a readable trace — `run_game.py`, new `Game/audit.py`
+- Add optional tracing to a file in `Results/`; retain the normal one-line terminal summary.
+- Record player count, seeds, starting seat, and initial positions. For each turn record the full rolled sequence, including cancelled `[6, 6, 6]` turns. The engine currently discards cancelled rolls, so expose the collected sequence to the logger without drawing any extra dice values or changing gameplay.
+- For each decision save a copy of state before the move, legal choices, chosen piece IDs (or forced pass), current/later rolls, and state after. Include relative positions and shared absolute squares; label yard/home/finish explicitly.
+- Show captures, pair movement/splitting, next player, and win/cutoff. Keep all players' positions available so unintended changes are visible.
+
+### 2. Check each transition — `Game/audit.py`, `Tests/test_audit.py`
+- Check that only selected pieces and legitimately captured opponents changed; verify movement distance, safe-square protection, pair rules, and exact finishing against `Rules.md`.
+- Check position limits, same-owner capacity (yard/finish exempt), and no opposing colors sharing unsafe squares.
+- Check forced passes, consumption of exactly one roll, turn progression, cancelled turns leaving the board unchanged, and immediate game ending. Report the first failure with seed, turn, and before/after state.
+- Do not rely solely on calling `legal_moves()` again: it may share the same bug. Add small hand-calculated cases for captures, safe squares, blockades, home entry, and three sixes even if the recorded game never reaches them.
+
+### 3. Review and record evidence
+- Run one fixed-seed four-player game and review every recorded decision in manageable sections. Explain unusual moves; random choices can be strategically poor but still legal.
+- Repeat automated checks across multiple seeds, both player counts, and starting seats. Verify tracing on/off produces identical rolls, choices, and results.
+- Log games reviewed, rule cases covered, failures/fixes, and remaining gaps here. Mark complete only after the trace and checks have actually been reviewed; do not claim this proves the whole engine bug-free.
+
+**Start with:** Explain and implement the optional trace first, then the transition checks and full-game review. No heuristic or RL additions during this task.
