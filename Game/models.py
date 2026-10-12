@@ -95,7 +95,20 @@ class Move:
             f"Player ID: {self.player_id}\n"
             f"Piece IDs: {self.piece_ids}\n"
         )
+
+@dataclass
+class GameResult:
+    winner_id: int | None
+    seed: int
+    num_players: int
+    starting_player_index: int
+    max_turns: int
+    turns_played: int
+    moves_played: int
+    truncated: bool
+
     
+
 def initial_state(num_players: int) -> 'GameState':
     if type(num_players) != int:
         raise TypeError("Number of players must be an integer")

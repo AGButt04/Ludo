@@ -173,7 +173,7 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 
 ## Task 21 — Audit a complete game, move by move
 
-**Status:** Planned; not yet implemented or reviewed. **Purpose:** Make every turn inspectable and check transitions against our agreed rules before adding stronger agents. Existing tests check positions, occupancy, and repeatability; they are not a complete game audit.
+**Status:** Deferred at the student's request on October 12 to work on two short result-reporting tasks. Not implemented or reviewed; return to this audit before relying on experimental findings. **Purpose:** Make every turn inspectable and check transitions against our agreed rules before adding stronger agents. Existing tests check positions, occupancy, and repeatability; they are not a complete game audit.
 
 ### 1. Record a readable trace — `run_game.py`, new `Game/audit.py`
 - Add optional tracing to a file in `Results/`; retain the normal one-line terminal summary.
@@ -193,3 +193,30 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 - Log games reviewed, rule cases covered, failures/fixes, and remaining gaps here. Mark complete only after the trace and checks have actually been reviewed; do not claim this proves the whole engine bug-free.
 
 **Start with:** Explain and implement the optional trace first, then the transition checks and full-game review. No heuristic or RL additions during this task.
+
+## Task 22 — Define a game result
+
+**Status:** Complete. All eight fields and annotations match the plan; constructing winning and cutoff results passed checks. No code corrections needed. **File:** `Game/models.py`. **Purpose:** Give each game a structured summary that we can later save and analyze.
+
+- Add a `GameResult` dataclass with required fields: `winner_id: int | None`, `seed: int`, `num_players: int`, `starting_player_index: int`, `max_turns: int`, `turns_played: int`, `moves_played: int`, `truncated: bool`.
+- `winner_id=None` and `truncated=True` mean the turn limit was reached; a completed game has a winner and `truncated=False`.
+- Count one turn per full roll sequence (including cancelled three-six turns and the final winning turn). Count one move per applied single/pair choice; a forced pass or cancelled turn counts as zero moves.
+- This class only stores results. It does not roll, move pieces, or write files. No custom constructor or string method is needed.
+
+**Example:** Winner 0, seed 7, four players, starting index 2, limit 10000, 180 turns, 210 moves, not truncated. These are illustrative values, not measured results.
+
+**Check:** Construct one winning result and one cutoff result and inspect their fields. Review this class before Task 23.
+
+## Task 23 — Return the summary from the runner
+
+**Status:** Complete. Fixed required `GameResult` construction arguments, added integer seed validation, and printed result counts. All 40 tests pass, including reproducible results, cutoff/pass/cancelled-turn counts, and a pair finishing as one move. Default seeded run: winner 0, 505 turns, 512 moves. Task 21's full-game audit remains deferred. **File:** `run_game.py`. **Purpose:** Collect useful counts during the existing game loop without changing its decisions.
+
+- Import `GameResult` and change the return annotation to `GameResult`. Keep `seed` an integer for this runner; reject non-integers so its recorded seeds can reproduce the run.
+- Initialize `moves_played = 0`. After a successful `play_turn()`, increment it only when `move is not None`; a pair still counts as one move.
+- On a win, return a `GameResult` using the winner ID, input settings, `turns_played=turn + 1`, move count, and `truncated=False`.
+- On limit exhaustion, return the same structure with `winner_id=None`, `turns_played=max_turns`, and `truncated=True`.
+- Update the final print to inspect `result.winner_id is not None` and show winner/cutoff, turns, and moves in one line. Update runner tests that currently expect an integer or `None` to inspect these fields instead.
+
+**Checks after implementation:** Repeatable complete result for equal seeds/settings; winner 0 handled correctly; one-turn cutoff; forced passes/triple sixes do not count as moves; a pair counts once; changed return type does not break callers. Run the regression suite quietly.
+
+**Later:** Write one result per CSV/JSONL record and summarize batches. Those features are not part of these two tasks; Task 21 remains deferred.
