@@ -112,19 +112,23 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from run_game import run_game
-    from Experiments.results_io import save_result, load_results
+    from datetime import datetime
+    from Experiments.batch import run_batch, summarize_results
+    from Experiments.results_io import load_results
 
-    # A demo file, separate from future research results.
-    path = "Results/demo_results.jsonl"
-    result = run_game(seed=0)
-    save_result(result, path)
+    # A new filename each run, so earlier batches are never overwritten.
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    path = f"Results/demo_batch_{timestamp}.jsonl"
 
+    results = run_batch(num_games=8, output_path=path, base_seed=0)
     saved_results = load_results(path)
-    latest = saved_results[-1]  # The last record is the one we just appended.
+    summary = summarize_results(saved_results)
 
     print("Saved to:", path)
-    print("Records in file:", len(saved_results))
-    print("Read back: winner", latest.winner_id,
-          "| Turns:", latest.turns_played, "| Moves:", latest.moves_played)
-    print("Loaded result matches original:", latest == result)
+    print("Loaded results match:", saved_results == results)
+    print("Games:", summary["total_games"], "| Completed:", summary["completed_games"],
+          "| Cutoffs:", summary["cutoffs"])
+    print("Wins by player:", summary["wins_by_player"])
+    print("Win rates (completed games):", summary["win_rates_completed_games"])
+    print("Average turns:", summary["average_turns_all_games"],
+          "| Average moves:", summary["average_moves_all_games"])
