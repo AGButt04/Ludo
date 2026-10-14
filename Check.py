@@ -112,21 +112,19 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Game.models import Move
-    from Game.engine import play_turn
-    from Game.rules import legal_moves
+    from run_game import run_game
+    from Experiments.results_io import save_result, load_results
 
-    state = initial_state(4)
-    # Pretend roll_turn() just produced [6, 6, 4].
-    state.dice_roll = 6
-    state.remaining_rolls = [6, 4]
+    # A demo file, separate from future research results.
+    path = "Results/demo_results.jsonl"
+    result = run_game(seed=0)
+    save_result(result, path)
 
-    print("Red's rolls: [6, 6, 4]. All pieces start in the yard (0).")
+    saved_results = load_results(path)
+    latest = saved_results[-1]  # The last record is the one we just appended.
 
-    # Example player choices: release piece 0, release piece 1, then move piece 0.
-    for piece_id in [0, 1, 0]:
-        choices = legal_moves(state, state.dice_roll)
-        print("\nRoll:", state.dice_roll, "| Legal choices:", [move.piece_ids for move in choices])
-        play_turn(state, Move(0, (piece_id,)))
-        print("Chose piece", piece_id, "| Red positions:", [piece.position for piece in state.players[0].pieces])
-        print("Current player:", state.current_player().color.name, "| Next roll:", state.dice_roll)
+    print("Saved to:", path)
+    print("Records in file:", len(saved_results))
+    print("Read back: winner", latest.winner_id,
+          "| Turns:", latest.turns_played, "| Moves:", latest.moves_played)
+    print("Loaded result matches original:", latest == result)

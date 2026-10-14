@@ -220,3 +220,26 @@ Completed coding tasks below have been checked. Task 10 records agreed rules wit
 **Checks after implementation:** Repeatable complete result for equal seeds/settings; winner 0 handled correctly; one-turn cutoff; forced passes/triple sixes do not count as moves; a pair counts once; changed return type does not break callers. Run the regression suite quietly.
 
 **Later:** Write one result per CSV/JSONL record and summarize batches. Those features are not part of these two tasks; Task 21 remains deferred.
+
+## Task 24 — Save and read game summaries
+
+**Status:** Complete (October 14). Corrected imports and implemented append/read methods. Temporary-file tests cover round-trip records, nested folders, blank/empty files, and visible errors. Updated two stale runner tests for the `GameResult` return type. Current suite: 41 tests pass (the checked-out suite differs from the earlier 40-test snapshot). **File:** `Experiments/results_io.py`. **Purpose:** Preserve `GameResult` records for later batch analysis, without mixing file operations into game rules.
+
+**Format:** JSON Lines (`.jsonl`): each line is one complete game summary. Python's standard `json` module preserves integers, booleans, and `None` (written as `null`). No extra library needed.
+
+### 1. `save_result(result: GameResult, path: str) -> None`
+- Import `asdict` from `dataclasses`, `Path` from `pathlib`, `json`, and `GameResult`.
+- Convert the result to a dictionary with `asdict(result)`.
+- Create the parent folder if necessary: `Path(path).parent.mkdir(parents=True, exist_ok=True)`.
+- Open the file in append mode (`"a"`, `encoding="utf-8"`) with a `with` block. Write `json.dumps(...)` plus `"\n"`. Append one line; never erase earlier results.
+
+### 2. `load_results(path: str) -> list[GameResult]`
+- Open for reading with UTF-8, iterate over lines, and skip blank lines.
+- Decode each line with `json.loads(line)` and reconstruct with `GameResult(**data)`. Here `**data` supplies dictionary entries as named constructor arguments.
+- Append each result to a list and return it. Let missing-file or malformed-record errors surface; do not silently treat them as no results. This reconstructs records, not full schema validation.
+
+**Connect:** In a short demo, `result = run_game()` → `save_result(result, "Results/random_games.jsonl")` → `load_results(...)`. Keep `run_game()` itself free of file writes; logging must not affect its randomness. These records are initial random-agent summaries, not detailed move traces or publication-ready experiment metadata.
+
+**Checks after implementation:** Save a win and cutoff to a temporary file; load them and compare with the original objects. Check append preserves both records, winner 0 and `None` survive, nested folders are created, and invalid JSON is reported. Keep terminal output short.
+
+**Next after this:** A small batch runner and automatic summary statistics. Full-game audit (Task 21) remains deferred.

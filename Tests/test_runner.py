@@ -54,9 +54,10 @@ class RunnerChecks(unittest.TestCase):
                 with patch.object(runner, 'initial_state', return_value=state), \
                      patch.object(runner, 'play_turn', side_effect=checked_play), \
                      redirect_stdout(output):
-                    winner = runner.run_game(count, seed, starting_player_index=start)
-                self.assertIsNotNone(winner)
-                self.assertTrue(has_won(state, winner))
+                    result = runner.run_game(count, seed, starting_player_index=start)
+                self.assertIsNotNone(result.winner_id)
+                self.assertFalse(result.truncated)
+                self.assertTrue(has_won(state, result.winner_id))
                 self.assertEqual(sum(has_won(state, p.player_id) for p in state.players), 1)
                 self.assertEqual(trace[0][0], start)
                 self.assertEqual(output.getvalue(), '')
@@ -64,7 +65,10 @@ class RunnerChecks(unittest.TestCase):
             self.assertEqual(traces[0], traces[1])
 
     def test_cutoff(self):
-        self.assertIsNone(runner.run_game(max_turns=1))
+        result = runner.run_game(max_turns=1)
+        self.assertIsNone(result.winner_id)
+        self.assertTrue(result.truncated)
+        self.assertEqual(result.turns_played, 1)
 
     def test_input_validation(self):
         for value in (True, 1.5, '2'):
