@@ -1,6 +1,7 @@
 from Game.models import GameResult
 from run_game import run_game
 from Experiments.results_io import save_result, load_results
+from Experiments.run_config import prepare_run
 from pathlib import Path
 
 def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players: int = 4, max_turns: int = 10000) -> list[GameResult]:
@@ -80,4 +81,89 @@ def summarize_results(results: list[GameResult]) -> dict:
         "average_moves_all_games": avg_moves,
     }
 
+def run_experiment(
+    target_games: int,
+    run_dir: str, 
+    base_seed: int = 0, 
+    num_players: int = 4,
+    max_turns: int = 10000,
+    max_new_games = None
+) -> list[GameResult]:
+
+    if type(target_games) is not int:
+        raise TypeError("Target games must be an integer.")
+    if target_games <= 0:
+        raise ValueError("Target games must be positive.")
+
+    if max_new_games is not None:
+        if type(max_new_games) is not int:
+            raise TypeError("Max new games must be an integer.")
+        if max_new_games <= 0:
+            raise ValueError("Max new games must be positive.")
+
+    results_path = prepare_run(run_dir, base_seed, num_players, max_turns)
+
+    if results_path.exists():
+        results = load_results(str(results_path))
+    else:
+        results = []
     
+    saved_game_ids = set()
+
+    for result in results:
+        if type(result.seed) is not int:
+            raise ValueError("Saved seed must be an integer.")
+
+        game_id = result.seed - base_seed
+
+        if not 0 <= game_id < target_games:
+            raise ValueError("Saved game ID is outside the requested range.")
+
+        if result.num_players != num_players or result.max_turns != max_turns:
+            raise ValueError("Saved game settings do not match this experiment.")
+
+        if result.starting_player_index != game_id % num_players:
+            raise ValueError("Saved game has the wrong starting player.")
+
+        if game_id in saved_game_ids:
+            raise ValueError("This game appears more than once in the results.")
+        
+        if type(result.truncated) is not bool:
+            raise ValueError("Saved cutoff status must be a boolean.")
+
+        if result.truncated:
+            if result.winner_id is not None:
+                raise ValueError("A cutoff game cannot have a winner.")
+        else:
+            if type(result.winner_id) is not int:
+                raise ValueError("A completed game must have an integer winner ID.")
+
+            if not 0 <= result.winner_id < num_players:
+                raise ValueError("Winner ID must identify a participating player.")
+        
+        saved_game_ids.add(game_id)
+    
+    new_games = 0
+
+    for game_id in range(target_games):
+        if game_id in saved_game_ids:
+            continue
+
+        if max_new_games is not None and new_games >= max_new_games:
+            break
+
+        result = run_game(
+            num_players=num_players,
+            seed=base_seed + game_id,
+            max_turns=max_turns,
+            starting_player_index=game_id % num_players,
+        )
+
+        save_result(result, str(results_path))
+        results.append(result)
+        new_games += 1
+    
+    results.sort(key=lambda result: result.seed)
+    return results
+
+

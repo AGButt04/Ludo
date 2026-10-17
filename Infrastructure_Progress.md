@@ -1,6 +1,6 @@
 # Infrastructure Progress
 
-Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 are planned for fall break, then return to deferred Task 21. Rule decisions and remaining questions live in [Rules.md](Rules.md).
+Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 are complete; next return to deferred Task 21. Rule decisions and remaining questions live in [Rules.md](Rules.md).
 
 ## Completed tasks
 
@@ -33,8 +33,8 @@ Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 a
 
 ## Current verification and usage
 
-- Last regression run (October 17): **45 tests passed**. Batch checks also covered repeatability, file preservation, empty/all-cutoff inputs, and mixed player-count rejection.
-- `python3 Check.py`: creates `Results/demo_batch.jsonl` once with eight games, then loads and summarizes the existing file on later runs. This replaces the originally proposed separate batch-module demo.
+- Last regression run (October 17): **49 tests passed**. Batch checks also covered repeatability, file preservation, empty/all-cutoff inputs, and mixed player-count rejection.
+- `python3 Check.py`: resume demo in a temporary folder—save two games, resume to five, then call again with no new games. Checks preserved results and unchanged file; temporary files are automatically removed.
 - `python3 run_game.py`: one random-agent game with a short outcome summary.
 - Win rates use completed games; average turns/moves include all games. Cutoffs are reported separately, not treated as draws or losses.
 - A turn is a full roll sequence, including cancelled turns. A move is one applied single/pair action; forced passes are not moves.
@@ -43,7 +43,7 @@ Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 a
 Full regression command (from this folder):
 
 ```bash
-python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns Tests.test_runner Tests.test_results_io Tests.test_run_config -q
+python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns Tests.test_runner Tests.test_results_io Tests.test_run_config Tests.test_experiment -q
 ```
 
 ## Task 21 — Full-game audit (deferred)
@@ -69,7 +69,7 @@ Resume with the optional trace after Tasks 26–27. The full audit is still unfi
 
 ## Task 27 — Resume an experiment without duplicate games
 
-**Status:** Planned; depends on Task 26. **File:** `Experiments/batch.py`.
+**Status:** Complete. No implementation corrections needed in the final review. Verified two games → resume to five → repeat with zero new games; results match an uninterrupted run. Gap filling, extension, invalid records/settings, and unchanged saved data on rejection also checked. All 49 tests pass; checks used temporary directories. **File:** `Experiments/batch.py`.
 **Purpose:** Request a total number of games and run only those not already recorded.
 
 1. Add `run_experiment(target_games, run_dir, base_seed=0, num_players=4, max_turns=10000, max_new_games=None) -> list[GameResult]`. Keep the existing fresh-file `run_batch()` available. Validate positive integer counts (reject booleans); `max_new_games=None` means no per-call limit. Obtain the results path through `prepare_run()`.

@@ -112,26 +112,26 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from Experiments.batch import run_batch, summarize_results
-    from Experiments.results_io import load_results
+    from tempfile import TemporaryDirectory
     from pathlib import Path
+    from Experiments.batch import run_experiment
 
-    # Reuse saved demo results instead of generating duplicates.
-    path = Path("Results/demo_batch.jsonl")
+    # A fresh temporary folder makes the demo repeatable without cluttering Results/.
+    # Python removes it automatically when this block finishes.
+    with TemporaryDirectory() as run_dir:
+        first = run_experiment(target_games=5, run_dir=run_dir, max_new_games=2)
+        print("Call 1: requested 5, allowed 2 new games.")
+        print("Saved game IDs:", [result.seed for result in first])  # Base seed is 0.
 
-    if path.exists():
-        results = load_results(str(path))
-        print("Loaded existing results.")
-    else:
-        results = run_batch(num_games=8, output_path=str(path), base_seed=0)
-        print("Generated and saved new results.")
+        resumed = run_experiment(target_games=5, run_dir=run_dir)
+        print("Call 2: resumed. New games:", len(resumed) - len(first))
+        print("Saved game IDs:", [result.seed for result in resumed])
+        print("First two results preserved:", resumed[:2] == first)
 
-    summary = summarize_results(results)
-    
-    print("Results file:", str(path))
-    print("Games:", summary["total_games"], "| Completed:", summary["completed_games"],
-          "| Cutoffs:", summary["cutoffs"])
-    print("Wins by player:", summary["wins_by_player"])
-    print("Win rates (completed games):", summary["win_rates_completed_games"])
-    print("Average turns:", summary["average_turns_all_games"],
-          "| Average moves:", summary["average_moves_all_games"])
+        results_path = Path(run_dir) / "games.jsonl"
+        before = results_path.read_bytes()
+        repeated = run_experiment(target_games=5, run_dir=run_dir)
+        print("Call 3: already complete. New games:", len(repeated) - len(resumed))
+        print("File unchanged:", results_path.read_bytes() == before)
+
+    print("Demo finished; temporary files cleaned up. Your Results/ folder was untouched.")

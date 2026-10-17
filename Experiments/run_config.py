@@ -42,6 +42,7 @@ def prepare_run(
 
         if saved_config != config:
             raise ValueError("This run already has different settings. Use a new run directory.")
+        
         # Python treats True == 1; stored setting types must match too.
         if any(type(saved_config[key]) is not type(value) for key, value in config.items()):
             raise ValueError("Saved config contains incorrect setting types.")
