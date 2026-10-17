@@ -2,6 +2,12 @@
 
 Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 are complete; next return to deferred Task 21. Rule decisions and remaining questions live in [Rules.md](Rules.md).
 
+## Current focus — Understand the existing code
+
+New features are on hold at the student's request. Work through small reading groups: student writes purpose/input/output/side-effect comments, then explains concrete examples; review comments and ask prediction questions before advancing. Do not write the student's comments for them.
+
+First group: `Game/constants.py` (read), then `Piece`, `Piece.__str__()`, `Color`, `Player.__post_init__()`, and `Player.__str__()` in `Game/models.py`. Later groups: remaining models → dice/rules → engine → agents/runner → results/configuration/batches. Understanding review is not yet complete; Task 21 remains deferred.
+
 ## Completed tasks
 
 | Task | Purpose |
