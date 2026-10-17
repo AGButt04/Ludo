@@ -1,6 +1,6 @@
 # Infrastructure Progress
 
-Updated October 14, 2026. Tasks 1–20 and 22–25 are complete; Task 21 is deferred. Rule decisions and remaining questions live in [Rules.md](Rules.md).
+Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 are planned for fall break, then return to deferred Task 21. Rule decisions and remaining questions live in [Rules.md](Rules.md).
 
 ## Completed tasks
 
@@ -33,8 +33,8 @@ Updated October 14, 2026. Tasks 1–20 and 22–25 are complete; Task 21 is defe
 
 ## Current verification and usage
 
-- Last regression run: **41 tests passed**. Batch checks also covered repeatability, file preservation, empty/all-cutoff inputs, and mixed player-count rejection.
-- `python3 Check.py`: eight-game batch demo, saved to a fresh timestamped file in `Results/`, then read back and summarized. This replaces the originally proposed separate batch-module demo.
+- Last regression run (October 17): **45 tests passed**. Batch checks also covered repeatability, file preservation, empty/all-cutoff inputs, and mixed player-count rejection.
+- `python3 Check.py`: creates `Results/demo_batch.jsonl` once with eight games, then loads and summarizes the existing file on later runs. This replaces the originally proposed separate batch-module demo.
 - `python3 run_game.py`: one random-agent game with a short outcome summary.
 - Win rates use completed games; average turns/moves include all games. Cutoffs are reported separately, not treated as draws or losses.
 - A turn is a full roll sequence, including cancelled turns. A move is one applied single/pair action; forced passes are not moves.
@@ -43,7 +43,7 @@ Updated October 14, 2026. Tasks 1–20 and 22–25 are complete; Task 21 is defe
 Full regression command (from this folder):
 
 ```bash
-python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns Tests.test_runner Tests.test_results_io -q
+python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns Tests.test_runner Tests.test_results_io Tests.test_run_config -q
 ```
 
 ## Task 21 — Full-game audit (deferred)
@@ -54,7 +54,33 @@ Postponed at the student's request; not implemented or reviewed. Return before r
 2. **Check transitions:** Verify movement, captures, safe squares, blockades, occupancy, finishing, forced passes, and turn changes. Report seed/turn on failure. Use hand-calculated cases as well as automated checks; reusing legal_moves alone can repeat its bugs.
 3. **Review:** Inspect one full seeded four-player game in manageable sections, then check multiple seeds/player counts/starting seats. Confirm logging does not change gameplay. Record coverage, fixes, and remaining gaps before marking complete.
 
-Start with explaining the optional trace. No new implementation task is active after Task 25; agree on the next step with the student.
+Resume with the optional trace after Tasks 26–27. The full audit is still unfinished.
+
+## Task 26 — Reuse the demo and identify experiment runs
+
+**Status:** Complete. Fixed-file demo and config creation/reuse verified. Fixed seed type, added range checks, and completed config comparison, orphan-results rejection, and results-path return. All 45 tests pass; configuration tests use temporary folders. **Files:** `Check.py`, new `Experiments/run_config.py`.
+**Purpose:** Stop duplicate demo files and give each experiment run fixed, recorded settings.
+
+1. In `Check.py`, use `Results/demo_batch.jsonl` instead of a timestamp. If it exists, load and summarize it; otherwise run/save the eight-game demo. Print whether results were loaded or generated. Leave old files untouched.
+2. Add `prepare_run(run_dir, base_seed, num_players, max_turns) -> Path`: validate the settings, then create/read `config.json` inside that directory. Store those settings plus `schema_version=1`, `rules_version=1`, `agent_type="random"`, and `starting_seat_policy="rotate"`. If an existing config differs, raise an error; never overwrite it. Return the path to `games.jsonl` inside that directory. Reject existing game data without a config instead of assigning it new settings.
+3. The directory identifies the run, e.g. `Results/random_run_001/`. Game ID is its zero-based index `i`; seed is `base_seed + i`, starting seat is `i % num_players`. For this initial format, derive the ID from the saved seed; no new GameResult field is needed. Version labels must change when incompatible rules/record formats change.
+
+**Check:** Repeating the demo creates no extra records; identical config is accepted; changed config or unlabelled existing game data is rejected. Validate all inputs before creating files.
+
+## Task 27 — Resume an experiment without duplicate games
+
+**Status:** Planned; depends on Task 26. **File:** `Experiments/batch.py`.
+**Purpose:** Request a total number of games and run only those not already recorded.
+
+1. Add `run_experiment(target_games, run_dir, base_seed=0, num_players=4, max_turns=10000, max_new_games=None) -> list[GameResult]`. Keep the existing fresh-file `run_batch()` available. Validate positive integer counts (reject booleans); `max_new_games=None` means no per-call limit. Obtain the results path through `prepare_run()`.
+2. Load saved results (or start empty if the file is missing). Verify each result matches the config, its derived game ID is in `0..target_games-1`, its starting seat matches that ID, and no IDs repeat. Reject inconsistent winner/cutoff records. Reject malformed data visibly, including an incomplete last JSON line; automatic crash-file repair is outside this task.
+3. Loop through target game IDs, skipping those saved. Run each missing game with its assigned seed/seat and append immediately. Stop after `max_new_games` new games if supplied. Return all saved/new results in game-ID order. A saved cutoff is a recorded trial and is not rerun. Do not put target_games in the fixed config, so a run can later grow.
+
+**Example:** Target 20 with `max_new_games=8` saves eight games. Call again without that limit: run only the remaining 12. Call a third time: run zero games and return the same 20 records.
+
+**Check:** Resumed results equal an uninterrupted run; no duplicates or changed earlier lines; seeds/seats stay consistent; changed settings, duplicate IDs, and malformed records fail before new games are appended. One process writes each run—parallel writers and automatic recovery are deferred.
+
+**Fall-break order:** Task 26 → Task 27 → Task 21 trace and review. Implement and review one task at a time; no RL libraries yet.
 
 ## Workflow
 

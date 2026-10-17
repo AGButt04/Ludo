@@ -1,0 +1,8 @@
+{"winner_id": 0, "seed": 0, "num_players": 4, "starting_player_index": 0, "max_turns": 10000, "turns_played": 505, "moves_played": 512, "truncated": false}
+{"winner_id": 1, "seed": 1, "num_players": 4, "starting_player_index": 1, "max_turns": 10000, "turns_played": 257, "moves_played": 266, "truncated": false}
+{"winner_id": 0, "seed": 2, "num_players": 4, "starting_player_index": 2, "max_turns": 10000, "turns_played": 295, "moves_played": 307, "truncated": false}
+{"winner_id": 0, "seed": 3, "num_players": 4, "starting_player_index": 3, "max_turns": 10000, "turns_played": 290, "moves_played": 313, "truncated": false}
+{"winner_id": 1, "seed": 4, "num_players": 4, "starting_player_index": 0, "max_turns": 10000, "turns_played": 398, "moves_played": 363, "truncated": false}
+{"winner_id": 2, "seed": 5, "num_players": 4, "starting_player_index": 1, "max_turns": 10000, "turns_played": 306, "moves_played": 291, "truncated": false}
+{"winner_id": 3, "seed": 6, "num_players": 4, "starting_player_index": 2, "max_turns": 10000, "turns_played": 254, "moves_played": 277, "truncated": false}
+{"winner_id": 0, "seed": 7, "num_players": 4, "starting_player_index": 3, "max_turns": 10000, "turns_played": 390, "moves_played": 376, "truncated": false}

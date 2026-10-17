@@ -112,20 +112,23 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from datetime import datetime
     from Experiments.batch import run_batch, summarize_results
     from Experiments.results_io import load_results
+    from pathlib import Path
 
-    # A new filename each run, so earlier batches are never overwritten.
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    path = f"Results/demo_batch_{timestamp}.jsonl"
+    # Reuse saved demo results instead of generating duplicates.
+    path = Path("Results/demo_batch.jsonl")
 
-    results = run_batch(num_games=8, output_path=path, base_seed=0)
-    saved_results = load_results(path)
-    summary = summarize_results(saved_results)
+    if path.exists():
+        results = load_results(str(path))
+        print("Loaded existing results.")
+    else:
+        results = run_batch(num_games=8, output_path=str(path), base_seed=0)
+        print("Generated and saved new results.")
 
-    print("Saved to:", path)
-    print("Loaded results match:", saved_results == results)
+    summary = summarize_results(results)
+    
+    print("Results file:", str(path))
     print("Games:", summary["total_games"], "| Completed:", summary["completed_games"],
           "| Cutoffs:", summary["cutoffs"])
     print("Wins by player:", summary["wins_by_player"])
