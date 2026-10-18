@@ -125,7 +125,6 @@ class GameResult:
     truncated: bool # Stopped at the turn limit without a winner; not a declared draw.
 
 
-
 def initial_state(num_players: int) -> 'GameState':
     # Validate the player count, then create a state with fresh players and pieces.
     # Pieces start in the yard; the first player is current and no rolls are pending.
