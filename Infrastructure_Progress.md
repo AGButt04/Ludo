@@ -4,9 +4,9 @@ Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 a
 
 ## Current focus — Understand the existing code
 
-New features are on hold at the student's request. Work through small reading groups: student writes purpose/input/output/side-effect comments, then explains concrete examples; review comments and ask prediction questions before advancing. Do not write the student's comments for them.
+New features are on hold at the student's request. Work through small reading groups: student writes purpose/input/output/side-effect comments, then explains concrete examples; review comments and ask prediction questions before advancing. Correct inaccurate comments briefly, as requested; let the student draft each new group first.
 
-First group: `Game/constants.py` (read), then `Piece`, `Piece.__str__()`, `Color`, `Player.__post_init__()`, and `Player.__str__()` in `Game/models.py`. Later groups: remaining models → dice/rules → engine → agents/runner → results/configuration/batches. Understanding review is not yet complete; Task 21 remains deferred.
+October 18 bookmark: reviewed models, dice, movement/mapping, occupancy, blockades, legal choices, and `apply_move()`. Reviewed/corrected comments for `roll_turn()` and `play_turn()` at the end of the session; start next time with a brief explanation check for those two. Validation/lookup helpers and `has_won()` still need a focused review, followed by agents/runner and results/configuration/batches. Understanding review is not yet complete; Task 21 remains deferred.
 
 ## Completed tasks
 

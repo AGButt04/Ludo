@@ -237,50 +237,69 @@ def move_destination(state: GameState, move: Move, dice_roll: int) -> int | None
         return destination if destination <= FINISHED else None
 
 def can_land(state: GameState, move: Move, destination: int) -> bool:
+    # Check landing occupancy; do not check the route/dice or change any pieces.
+    
+    # We get the player's selected pieces from the move.
     player, selected_pieces = get_move_pieces(state, move)
     validate_int_range(destination, TRACK_START, FINISHED, "Destination")
     
+    # Finish is exempt from the two-piece limit; all four pieces may finish.
     if destination == FINISHED:
         return True
     
+    # We check whether we have more of our pieces on the destination square or not.
     own_count = 0
     for piece in player.pieces:
+        # Count friendly pieces already there, excluding the selected pieces.
+
         if piece.piece_id not in move.piece_ids:
             if piece.position == destination:
                 own_count += 1
     
+    # Reject landings that would leave more than two friendly pieces here.
     if own_count + len(selected_pieces) > 2:
         return False
     
+    # The private home path has no opponents, but still has the two-piece limit.
     if HOME_START <= destination <= HOME_END:
         return True
     
+    # We check if it is a safe square.
     square = to_absolute(player.color, destination)
     if is_safe_square(square):
         return True
     
+    # We also have to check for potential captures.
     pieces_at_square = pieces_at(state, square)
     opponents_at_square = []
+
     for piece in pieces_at_square:
+        # How many of the opponents pieces are there?
         if piece.player_id != player.player_id:
             opponents_at_square.append(piece)
     
     if len(opponents_at_square) == 0:
         return True
     
+    # We can only go there if it's 1 for 1 or pair for pair, not else.
     return len(selected_pieces) == len(opponents_at_square)
 
 def legal_moves(state: GameState, dice_roll: int) -> list[Move]:
-    validate_roll(dice_roll)
+    # This returns the list of legal moves a current player 
+    # can take in the current state with the roll.
 
-    player = state.current_player()
+    validate_roll(dice_roll) # Validate the roll.
+
+    player = state.current_player() # Get the current player.
     moves = []
     candidates = []
 
     for piece in player.pieces:
+        # First we try all the single move for all the pieces, then we will filter.
         candidates.append(Move(player.player_id, (piece.piece_id, )))
     
     for first, second in combinations(player.pieces, 2):
+        # Add each co-located pair once, excluding yard and finish.
         if first.position == second.position:
             if first.position not in (YARD, FINISHED):
                 candidates.append(
@@ -292,6 +311,8 @@ def legal_moves(state: GameState, dice_roll: int) -> list[Move]:
         destination = move_destination(state, move, dice_roll)
         
         if destination is None:
+            # No destination for this selection and roll; 
+            # skip before path/landing checks.
             continue
         
         if len(move.piece_ids) == 1:
@@ -299,12 +320,13 @@ def legal_moves(state: GameState, dice_roll: int) -> list[Move]:
             _, selected = get_move_pieces(state, move)
             position = selected[0].position
 
-            # If moving one piece, is there a blockade in this path?
+            # Reject singles blocked by an opposing pair on an unsafe square.
             if single_path_blocked(state, player.player_id, position, destination):
                 continue
 
-        # Can those piece occupy the destination?
+        # Check landing permission for both singles and pairs.
         if can_land(state, move, destination):
+            # Keep this legal choice; do not apply it or choose for the agent.
             moves.append(move)
 
     return moves
