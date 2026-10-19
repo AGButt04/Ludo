@@ -4,6 +4,7 @@ from copy import deepcopy
 
 from Game.models import Move, initial_state
 from Game.engine import apply_move
+from Game.errors import InvalidMoveError
 from Game.rules import has_won
 
 
@@ -74,7 +75,7 @@ class EngineChecks(unittest.TestCase):
                                   (Move(0, (0, 1)), 4, ValueError),
                                   (Move(0, (0, 1)), 3, ValueError),
                                   (Move(0, (0,)), 7, ValueError),
-                                  (None, 2, TypeError)]:
+                                  (None, 2, InvalidMoveError)]:
             before = deepcopy(self.state)
             with self.assertRaises(error):
                 apply_move(self.state, move, roll)

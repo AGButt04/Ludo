@@ -4,7 +4,7 @@ Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 a
 
 ## Current focus — Understand the existing code
 
-New features are on hold at the student's request. Work through small reading groups: student writes purpose/input/output/side-effect comments, then explains concrete examples; review comments and ask prediction questions before advancing. Correct inaccurate comments briefly, as requested; let the student draft each new group first.
+The student requested a code-understanding phase; on October 18 they selected Tasks 28–29 for the next session (October 19), with explanations before implementation. Work through small reading groups: student writes purpose/input/output/side-effect comments, then explains concrete examples; review comments and ask prediction questions before advancing. Correct inaccurate comments briefly, as requested; let the student draft each new group first.
 
 October 18 bookmark: reviewed models, dice, movement/mapping, occupancy, blockades, legal choices, and `apply_move()`. Reviewed/corrected comments for `roll_turn()` and `play_turn()` at the end of the session; start next time with a brief explanation check for those two. Validation/lookup helpers and `has_won()` still need a focused review, followed by agents/runner and results/configuration/batches. Understanding review is not yet complete; Task 21 remains deferred.
 
@@ -60,7 +60,7 @@ Postponed at the student's request; not implemented or reviewed. Return before r
 2. **Check transitions:** Verify movement, captures, safe squares, blockades, occupancy, finishing, forced passes, and turn changes. Report seed/turn on failure. Use hand-calculated cases as well as automated checks; reusing legal_moves alone can repeat its bugs.
 3. **Review:** Inspect one full seeded four-player game in manageable sections, then check multiple seeds/player counts/starting seats. Confirm logging does not change gameplay. Record coverage, fixes, and remaining gaps before marking complete.
 
-Resume with the optional trace after Tasks 26–27. The full audit is still unfinished.
+Return to the optional trace after the newly prioritized Tasks 28–29. The full audit is still unfinished.
 
 ## Task 26 — Reuse the demo and identify experiment runs
 
@@ -86,7 +86,34 @@ Resume with the optional trace after Tasks 26–27. The full audit is still unfi
 
 **Check:** Resumed results equal an uninterrupted run; no duplicates or changed earlier lines; seeds/seats stay consistent; changed settings, duplicate IDs, and malformed records fail before new games are appended. One process writes each run—parallel writers and automatic recovery are deferred.
 
-**Fall-break order:** Task 26 → Task 27 → Task 21 trace and review. Implement and review one task at a time; no RL libraries yet.
+**Next-session order:** Task 28 → Task 29 → return to Task 21 trace and review. Implement and review one task at a time; no RL libraries yet.
+
+## Task 28 — Recover from invalid choices
+
+**Status:** In progress. Invalid-action guards, retries, and runner forfeiture handling verified. Three rejected choices forfeit the remaining turn, preserve earlier valid moves, and let the game continue. Retry limits reset per roll; forced passes never ask the agent. All 55 tests pass. Saving rejection/forfeiture records and recording the retry policy in experiment settings remain.
+**Purpose:** Reject invalid human/agent choices and allow another attempt without losing the game.
+
+**Current coding step:** Add required integer fields `invalid_choices` and `forfeited_turns` to `GameResult`; initialize both to zero in `run_game`. Count `len(rejections)` after a successful helper return and in the retry-limit handler before its `break`; increment forfeitures only in that handler. These are whole-game totals. Example: two rejected choices then a valid move adds 2 invalid choices and 0 forfeitures. Review tests and saved-record compatibility next; do not treat missing counters in old records as measured zeros. Update experiment schema/policy settings before resuming saved runs.
+
+- Explain and implement a distinct invalid-action signal at the action boundary. Handle expected rejection in the caller; do not broadly catch unrelated engine exceptions as invalid moves.
+- Request a fresh choice after rejection, preserving all piece positions, current player, pending rolls, and move/turn counts. Do not reroll or silently substitute a different move.
+- Agreed October 19: allow at most **three rejected attempts per pending roll** for an automated agent (three attempts total if all fail). Reset the counter for the next roll. Human input may retry until valid or quit.
+- After the third rejected attempt, the caller handles `AgentRetryLimitError` by forfeiting the rest of that agent's turn: clear current/later rolls, advance once, and continue the game. Preserve earlier valid moves from that turn. Record rejections and forfeitures separately from wins/cutoffs; never substitute a move. Explain the record format before implementing persistence.
+- With no legal moves, neither agent nor human is asked for a choice: automatically call `play_turn(state, None)`. Consume only that roll; continue with stored rolls, or advance if none remain. No retry is charged and no fresh roll is generated during this pass.
+- Check invalid choice → valid choice succeeds; wrong player, illegal pair, invalid pass, and malformed input cannot mutate state. Check retry exhaustion and ensure unexpected errors remain visible.
+
+## Task 29 — Play against random agents in the terminal
+
+**Status:** Planned; depends on Task 28. Start with a text interface, not a graphical board.
+**Purpose:** Let the student play and inspect the engine directly.
+
+- Add a separate human-play entry point using the existing engine, with one human seat and random opponents. Keep automated experiment runs free of input prompts.
+- Show colors/player IDs, all piece positions (relative and shared absolute where applicable), current/remaining rolls, and numbered legal choices. Explain captures, forced passes, cancelled turns, and the winner.
+- Parse input separately from game execution; reject bad entries and ask again. Let the user quit cleanly without reporting a completed game. Use Task 28 recovery for invalid action attempts.
+- Automatically consume an unusable roll without prompting; display a short forced-pass message. Process any stored later rolls normally.
+- Test invalid text/out-of-range choices followed by valid input, pair selection, no-move handling, and quit/end-of-input. Use a short interactive demo; human games should not be saved as random-only research trials.
+
+**First step tomorrow:** Explain where rejection handling belongs, then implement and test it before adding terminal prompts. No code changes were made when recording this plan.
 
 ## Workflow
 

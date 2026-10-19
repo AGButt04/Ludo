@@ -2,7 +2,8 @@ from Game.models import initial_state, GameResult
 from Game.dice import Dice
 from Agents.random_agent import RandomAgent
 from Game.rules import legal_moves, has_won
-from Game.engine import play_turn, roll_turn
+from Game.engine import play_turn, roll_turn, forfeit_turn
+from Game.errors import InvalidMoveError, AgentRetryLimitError
 
 def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) -> GameResult:
     if type(seed) is not int:
@@ -32,6 +33,8 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) 
         turns_played=0,
         moves_played=0,
         truncated=False,
+        invalid_choices=0,
+        forfeited_turns=0
     )
 
     
@@ -44,13 +47,19 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) 
 
         while state.dice_roll is not None:
             current_player = state.current_player()
-            moves = legal_moves(state, state.dice_roll)
-
             agent = random_agents[current_player.player_id]
-            move = agent.choose_move(state, moves)
-            play_turn(state, move)
+            rejections = []
 
-            if move is not None: 
+            try:
+                moved = play_agent_roll(state, agent, rejections)
+            except AgentRetryLimitError:
+                game_result.invalid_choices += len(rejections)
+                game_result.forfeited_turns += 1
+                forfeit_turn(state)
+                break
+            game_result.invalid_choices += len(rejections)
+
+            if moved: 
                 game_result.moves_played += 1
 
             if has_won(state, current_player.player_id):
@@ -65,6 +74,27 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) 
     game_result.truncated = True
 
     return game_result
+
+def play_agent_roll(state, agent, rejections: list[str]) -> bool:
+    moves = legal_moves(state, state.dice_roll)
+
+    if not moves:
+        play_turn(state, None)
+        return False
+    
+    for attempt in range(3):
+        move = agent.choose_move(state, moves)
+
+        try:
+            play_turn(state, move)
+        except InvalidMoveError as error:
+            rejections.append(str(error))
+            continue
+
+        return True
+    
+    raise AgentRetryLimitError("Three invalid choices for the current roll.")
+
 
 if __name__ == "__main__":
     result = run_game()

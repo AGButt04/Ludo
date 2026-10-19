@@ -3,6 +3,7 @@ from Game.rules import get_move_pieces, legal_moves, move_destination
 from Game.rules import to_absolute, is_safe_square, has_won, pieces_at
 from Game.constants import YARD
 from Game.dice import Dice
+from Game.errors import InvalidMoveError
 
 def apply_move(state: GameState, move: Move, dice_roll: int) -> None:
     # This method applies the chosen move and change the game state.
@@ -11,6 +12,12 @@ def apply_move(state: GameState, move: Move, dice_roll: int) -> None:
     for player in state.players:
         if has_won(state, player.player_id):
             raise ValueError("The game has already ended.")
+
+    if not isinstance(move, Move):
+        raise InvalidMoveError("Choose one Move object.")
+    
+    if move.player_id != state.current_player().player_id:
+        raise InvalidMoveError("You can only move the current player's pieces.")
 
     # Resolve the move's player and selected pieces; legality checks their turn below.
     player, selected_pieces = get_move_pieces(state, move)
@@ -31,7 +38,7 @@ def apply_move(state: GameState, move: Move, dice_roll: int) -> None:
 
     # Reject an illegal choice before changing any piece positions.
     if not is_legal:
-        raise ValueError("This move is not legal.")
+        raise InvalidMoveError("This move is not legal.")
     
     # Then we retrive the move's destination and convert into absolute.
     move_des = move_destination(state, move, dice_roll)
@@ -104,7 +111,7 @@ def play_turn(state: GameState, move: Move | None) -> None:
     # None is allowed only when no legal move exists; it still consumes the roll below.
     if move is None:
         if moves:
-            raise ValueError("You must choose a move when one is available.")
+            raise InvalidMoveError("You must choose a move when one is available.")
     else:
         # Else we apply the move and change tha game state.
         apply_move(state, move, state.dice_roll)
@@ -124,3 +131,14 @@ def play_turn(state: GameState, move: Move | None) -> None:
         state.dice_roll = None
         state.current_player_index = (state.current_player_index + 1) % len(state.players)
  
+def forfeit_turn(state: GameState) -> None:
+    for player in state.players:
+        if has_won(state, player.player_id):
+            raise ValueError("The game has already ended.")
+
+    if state.dice_roll is None:
+        raise ValueError("There is no pending rolls to forfeit.")
+    
+    state.dice_roll = None
+    state.remaining_rolls = []
+    state.current_player_index = (state.current_player_index + 1) % len(state.players)

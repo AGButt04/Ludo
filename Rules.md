@@ -24,4 +24,6 @@ Agreed variant as of October 4, 2026. These are design decisions, not a claim th
 
 **Remaining decisions:** Starting-player selection and final two-player seating. Current yard release is one piece on a six, not paired release.
 
+**Action handling agreed October 19 (pending implementation):** No legal choices means an automatic pass for that roll, without asking a human/agent or charging a retry. Later stored rolls remain available. An automated agent gets at most three rejected attempts per pending roll; exhaustion forfeits all unused rolls and advances the player once, while preserving earlier valid moves. The game continues. Record rejected attempts and forfeitures; human input may retry until valid or quit. This policy must be identified in experiment settings before using it for recorded trials.
+
 **Implementation boundary:** Mapping, occupancy, safety, counts, shared paths, blockade detection, single-path obstruction, single/pair destinations, landing checks, legal-move generation, applying moves/captures, and winner detection exist. The complete turn loop remains to be implemented. Two-player creation currently selects red and green. `has_blockade()` rejects same-owner shared-square stacks larger than two, consistent with the agreed occupancy limit.

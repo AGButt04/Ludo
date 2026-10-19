@@ -123,6 +123,8 @@ class GameResult:
     turns_played: int # Full turn sequences started, including cancelled and winning turns.
     moves_played: int # Applied single/pair actions; excludes passes and cancelled rolls.
     truncated: bool # Stopped at the turn limit without a winner; not a declared draw.
+    invalid_choices: int # How many choiced were rejected?
+    forfeited_turns: int # How many turns were cut short after three rejected choices?
 
 
 def initial_state(num_players: int) -> 'GameState':
