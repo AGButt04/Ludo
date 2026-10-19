@@ -29,10 +29,12 @@ def prepare_run(
         "base_seed": base_seed,
         "num_players": num_players,
         "max_turns": max_turns,
-        "schema_version": 1,
+        "schema_version": 2,
         "rules_version": 1,
         "agent_type": "random",
         "starting_seat_policy": "rotate"
+        "max_invalid_attempts": 3,
+        "invalid_action_policy": "forfeit_remaining_turn"
     }
 
     if config_path.exists():

@@ -11,8 +11,10 @@ from Experiments.results_io import save_result, load_results
 class ResultsIOChecks(unittest.TestCase):
     def test_append_and_round_trip(self):
         """Preserve both records, including winner 0, None, and boolean values."""
-        win = GameResult(0, 7, 4, 2, 10000, 180, 210, False)
-        cutoff = GameResult(None, 8, 4, 0, 1, 1, 0, True)
+        win = GameResult(0, 7, 4, 2, 10000, 180, 210, False,
+                         invalid_choices=4, forfeited_turns=1)
+        cutoff = GameResult(None, 8, 4, 0, 1, 1, 0, True,
+                            invalid_choices=0, forfeited_turns=0)
         with TemporaryDirectory() as folder:
             path = Path(folder) / 'nested' / 'games.jsonl'
             save_result(win, str(path))
