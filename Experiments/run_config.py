@@ -32,7 +32,7 @@ def prepare_run(
         "schema_version": 2,
         "rules_version": 1,
         "agent_type": "random",
-        "starting_seat_policy": "rotate"
+        "starting_seat_policy": "rotate",
         "max_invalid_attempts": 3,
         "invalid_action_policy": "forfeit_remaining_turn"
     }
