@@ -4,6 +4,7 @@ from Agents.random_agent import RandomAgent
 from Game.rules import legal_moves, has_won
 from Game.engine import play_turn, roll_turn, forfeit_turn
 from Game.errors import InvalidMoveError, AgentRetryLimitError
+from copy import deepcopy
 
 def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) -> GameResult:
     if type(seed) is not int:
@@ -83,7 +84,7 @@ def play_agent_roll(state, agent, rejections: list[str]) -> bool:
         return False
     
     for attempt in range(3):
-        move = agent.choose_move(state, moves)
+        move = agent.choose_move(deepcopy(state), deepcopy(moves))
 
         try:
             play_turn(state, move)

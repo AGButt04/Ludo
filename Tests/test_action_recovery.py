@@ -9,6 +9,47 @@ from run_game import play_agent_roll, run_game
 
 
 class ActionRecoveryChecks(unittest.TestCase):
+    def test_agent_changes_stay_in_snapshot(self):
+        state = initial_state(4)
+        state.dice_roll, state.remaining_rolls = 6, [4]
+
+        def choose(snapshot, moves):
+            snapshot.players[1].pieces[0].position = 57
+            snapshot.remaining_rolls.clear()
+            snapshot.current_player_index = 2
+            return moves[0]
+
+        self.assertTrue(play_agent_roll(state, Mock(choose_move=choose), []))
+        self.assertEqual(state.players[1].pieces[0].position, 0)
+        self.assertEqual(state.players[0].pieces[0].position, 1)
+        self.assertEqual(state.current_player_index, 0)
+        self.assertEqual(state.dice_roll, 4)
+
+    def test_retry_receives_fresh_state_and_choices(self):
+        state = initial_state(4)
+        state.dice_roll, state.remaining_rolls = 6, [4]
+        original = deepcopy(state)
+        seen = []
+
+        def choose(snapshot, moves):
+            self.assertEqual(snapshot, original)
+            self.assertEqual(moves, [Move(0, (i,)) for i in range(4)])
+            seen.append(snapshot)
+            if len(seen) == 1:
+                snapshot.players[1].pieces[0].position = 57
+                snapshot.remaining_rolls.clear()
+                moves[0].player_id = 1
+                moves.clear()
+                return None
+            return moves[0]
+
+        rejections = []
+        self.assertTrue(play_agent_roll(state, Mock(choose_move=choose), rejections))
+        self.assertEqual(len(rejections), 1)
+        self.assertIsNot(seen[0], seen[1])
+        self.assertEqual(state.players[1].pieces[0].position, 0)
+        self.assertEqual(state.dice_roll, 4)
+
     def test_runner_continues_after_forfeiture(self):
         """Keep red's earlier move, discard its unused rolls, then let green win."""
         state = initial_state(4)

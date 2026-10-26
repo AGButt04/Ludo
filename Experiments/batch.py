@@ -3,6 +3,7 @@ from run_game import run_game
 from Experiments.results_io import save_result, load_results
 from Experiments.run_config import prepare_run
 from pathlib import Path
+from Experiments.results_io import validate_results
 
 def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players: int = 4, max_turns: int = 10000) -> list[GameResult]:
     for name, value in (
@@ -36,6 +37,9 @@ def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players:
     return results
 
 def summarize_results(results: list[GameResult]) -> dict:
+    for result in results:
+        validate_results(result)
+    
     if results:
         num_players = results[0].num_players
 
@@ -53,7 +57,7 @@ def summarize_results(results: list[GameResult]) -> dict:
         for player_id in range(num_players):
             wins[player_id] = 0
     
-    for result in results:
+    for result in results:        
         total_moves += result.moves_played
         total_turns += result.turns_played
 
@@ -71,7 +75,7 @@ def summarize_results(results: list[GameResult]) -> dict:
     avg_turns = total_turns / total_games if total_games > 0 else None
     avg_moves = total_moves / total_games if total_games > 0 else None
 
-    return {
+    result =  {
         "total_games": total_games,
         "completed_games": completed,
         "cutoffs": cutoffs,
@@ -80,6 +84,8 @@ def summarize_results(results: list[GameResult]) -> dict:
         "average_turns_all_games": avg_turns,
         "average_moves_all_games": avg_moves,
     }
+
+    return result
 
 def run_experiment(
     target_games: int,
@@ -159,6 +165,7 @@ def run_experiment(
             starting_player_index=game_id % num_players,
         )
 
+        validate_results(result)
         save_result(result, str(results_path))
         results.append(result)
         new_games += 1

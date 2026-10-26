@@ -86,7 +86,7 @@ Return to the optional trace after the newly prioritized Tasks 28–29. The full
 
 **Check:** Resumed results equal an uninterrupted run; no duplicates or changed earlier lines; seeds/seats stay consistent; changed settings, duplicate IDs, and malformed records fail before new games are appended. One process writes each run—parallel writers and automatic recovery are deferred.
 
-**Next-session order:** Task 28 → Task 29 → return to Task 21 trace and review. Implement and review one task at a time; no RL libraries yet.
+**Next-session order:** Tasks 30–32 below, then return to Task 21 trace and review. Finish Task 29 verification alongside the audit. No RL libraries yet.
 
 ## Task 28 — Recover from invalid choices
 
@@ -94,11 +94,33 @@ Return to the optional trace after the newly prioritized Tasks 28–29. The full
 
 ## Task 29 — Play against random agents in the terminal
 
-**Status:** Starting. Build a separate human-play entry point; keep research runs free of input prompts.
+**Status:** Implemented in `human_play.py`: human versus three random agents, compact display, input retries, quitting, and turn handling. Focused checks passed; persistent interface tests and a full manual game review remain.
 
 1. Create `human_play.py` with `display_turn(state, moves)`: print the state, remaining rolls, and legal moves numbered from 1. Display only—no input or movement yet.
 2. Next: read a numbered choice, retry invalid input, and support quitting.
 3. Then: connect one human and random opponents to the engine; show forced passes, captures, cancelled turns, and the winner. Test input/recovery and quit handling before marking complete.
+
+## Task 30 — Protect the board from agent changes
+
+**Status:** Complete. Fresh deep copies protect state and choices on every attempt. Mutation/retry checks pass; sampled two-/four-player seeded results match the previous behavior. All 48 tests in `Tests/` pass. **File:** `run_game.py`.
+**Why:** Choosing a move must not change the real board.
+1. In `play_agent_roll()`, give `choose_move()` fresh deep copies of the state and legal moves on every attempt. A deep copy also separates nested players and pieces.
+2. Apply the returned choice to the real state through the existing engine validation.
+**Check:** An agent changing an opponent's piece, stored rolls, or supplied choices cannot change the real board or poison the next retry. Normal seeded play stays the same.
+
+## Task 31 — Validate saved game results
+
+**Status:** Complete. Validation runs before saving, after loading, and before summary calculations. Field types, counters, player/seat ranges, turn limits, outcomes, seeds, and forfeiture/rejection consistency checked. All 52 tests in `Tests/` pass. **Files:** `Experiments/results_io.py`, `Experiments/batch.py`.
+**Why:** Corrupted records must not enter research statistics.
+1. Add one reusable result validator: strict field types (reject booleans as integers), valid IDs/settings, nonnegative counters, and consistent turns/outcomes.
+2. Use it before saving, after loading, and before summarizing. Keep experiment-specific seed/seat checks in `run_experiment()`.
+**Check:** Reject negative counters, invalid types, and inconsistent winner/cutoff records; valid records still round-trip. Never silently repair old records.
+
+## Task 32 — Refresh the project documents
+
+**Status:** Planned. **Files:** `README.md`, `Project_Map.md`, `Code_Walkthrough.md`, `Rules.md`.
+**Why:** Both chats and the student need an accurate description of the code.
+Update stale implementation claims; distinguish working features from pending verification. Keep the notes short. Then resume Task 21: explain the trace format before implementing it.
 
 ## Workflow
 

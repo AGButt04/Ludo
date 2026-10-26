@@ -62,7 +62,7 @@ class ExperimentChecks(unittest.TestCase):
             for text in invalid:
                 path.write_text(text)
                 with patch('Experiments.batch.run_game') as play:
-                    with self.assertRaises(ValueError):
+                    with self.assertRaises((TypeError, ValueError)):
                         run_experiment(2, folder, max_turns=1)
                     play.assert_not_called()
                 self.assertEqual(path.read_text(), text)

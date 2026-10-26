@@ -74,7 +74,7 @@ def choose_human_move(moves: list[Move]) -> Move | None:
         
         print("Choose a number from the displayed moves.")
 
-def play_human_game():
+def play_human_game() -> None:
     state = initial_state(4)
     dice = Dice(0)
     human_player_id = 0
@@ -128,3 +128,4 @@ def play_human_game():
 
 if __name__ == "__main__":
     play_human_game()
+ 
