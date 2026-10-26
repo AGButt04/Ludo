@@ -1,6 +1,6 @@
 # Ludo Rules Reference
 
-Agreed variant as of October 4, 2026. These are design decisions, not a claim that all rules are implemented.
+Updated October 26, 2026. These rules describe our chosen variant. The engine implements the main gameplay below, but the full correctness audit is unfinished.
 
 - Keep red as shared square 1. Safe squares are `1, 9, 14, 22, 27, 35, 40, 48`. Rotating the numbering by a whole color interval preserves this set.
 - Different players may share safe squares without capture.
@@ -15,15 +15,17 @@ Agreed variant as of October 4, 2026. These are design decisions, not a claim th
 - An intact pair cannot capture an opposing single piece: landing on that single on an unsafe square is illegal. Splitting the pair and moving one piece may capture the single normally.
 - Pairs may form and move in the private home path and finish together, using half an even roll and exact finishing.
 - The initial engine ends the game immediately when the first player finishes all four pieces. No further moves are allowed. Continuing for second/third/fourth-place rankings is deferred.
-- Board numbering does not decide who starts. The engine must support any participating player starting; seeded random selection versus explicit selection is still to be specified.
+- Board numbering does not decide who starts. `run_game()` accepts an explicit starting-player index; batches rotate it by game ID. Human play currently starts with red. Random starting-seat selection is not implemented.
 
 - Roll the full turn sequence before choosing moves: six grants another roll regardless of available moves; stop at the first non-six or third consecutive six. Capturing or finishing grants no additional roll.
 - Three consecutive sixes cancel the entire sequence before any pieces move; pass to the next player.
 - Otherwise all remaining rolls are visible to the acting player/agent. Use them separately in their original order, choosing a move and recalculating legal choices after each one. A roll with no legal move is consumed without movement. Rolls cannot be reordered or combined.
 - A winning move ends the game immediately; discard any unused rolls. Future RL observations must expose the remaining rolls. Benchmark comparisons must account for this information being available.
 
-**Remaining decisions:** Starting-player selection and final two-player seating. Current yard release is one piece on a six, not paired release.
+**Remaining decision:** Final two-player seating; creation currently uses adjacent red/green seats. Current yard release is one piece on a six, not paired release.
 
-**Action handling agreed October 19 (pending implementation):** No legal choices means an automatic pass for that roll, without asking a human/agent or charging a retry. Later stored rolls remain available. An automated agent gets at most three rejected attempts per pending roll; exhaustion forfeits all unused rolls and advances the player once, while preserving earlier valid moves. The game continues. Record rejected attempts and forfeitures; human input may retry until valid or quit. This policy must be identified in experiment settings before using it for recorded trials.
+**Implemented action handling (agreed October 19):** No legal choices means an automatic pass for that roll, without asking a human/agent or charging a retry. Later stored rolls remain available. An automated agent gets at most three rejected attempts per pending roll; exhaustion forfeits all unused rolls and advances the player once, while preserving earlier valid moves. The game continues. Record rejected attempts and forfeitures; human input may retry until valid or quit. Experiment config records three attempts and the `forfeit_remaining_turn` policy. Game summaries record rejection and forfeiture totals. Unexpected engine/agent programming errors are not treated as invalid choices.
 
-**Implementation boundary:** Mapping, occupancy, safety, counts, shared paths, blockade detection, single-path obstruction, single/pair destinations, landing checks, legal-move generation, applying moves/captures, and winner detection exist. The complete turn loop remains to be implemented. Two-player creation currently selects red and green. `has_blockade()` rejects same-owner shared-square stacks larger than two, consistent with the agreed occupancy limit.
+**Implementation boundary:** Mapping, occupancy, safety, counts, shared paths, blockade detection, single-path obstruction, single/pair destinations, landing checks, legal-move generation, applying moves/captures, and winner detection exist. The complete turn loop, random-game runner, and human terminal entry point exist. Agent choices use independent snapshots; summaries are validated on save/load and before aggregation. Persistent transition tracing and full-game audit remain pending. Two-player creation currently selects red and green. `has_blockade()` rejects same-owner shared-square stacks larger than two, consistent with the agreed occupancy limit.
+
+**Research implications:** Future RL observations must include pending rolls and actions must support singles and pairs. Player IDs/colors are currently coupled. Rotating starts alone does not balance different agent types across seats. Comparisons with papers require matching rules, information, and evaluation protocols; compatibility is not established by using the name Ludo.

@@ -1,106 +1,83 @@
 # Ludo RL Code Walkthrough
 
-Updated: October 2, 2026. Tasks 1–9, 11, and 12 are implemented and checked; the complete game engine is still to come. The source files are authoritative. Work one small section at a time.
+Updated October 26, 2026. This describes implemented code; the full engine audit remains unfinished.
 
-## 1. Board constants — `Game/constants.py`
+## 1. Positions and models
 
 | Relative position | Meaning |
 |---|---|
-| `0` (`YARD`) | Not released |
-| `1–51` | Progress on the shared track |
-| `52–56` | Private home path |
-| `57` (`FINISHED`) | Finished |
+| 0 | Yard |
+| 1–51 | Piece's progress on the shared track |
+| 52–56 | Private home path |
+| 57 | Finished |
 
-The physical shared track contains 52 squares; a piece's route visits 51. Its route skips the square immediately before its start, consistent with Section II.B of the 2011 paper. Implemented starts are red=1, green=14, yellow=27, blue=40.
+`Game/constants.py` defines a 52-square shared board, with starts red=1, green=14, yellow=27, blue=40. A piece visits 51 shared squares before entering its home path. Paper compatibility must be checked separately.
 
-## 2. Pieces, colors, and players — `Game/models.py`
+In `Game/models.py`, `@dataclass` generates constructors. `Piece` stores owner ID, piece ID, and progress. `Player.__post_init__()` assigns `Color(player_id)` and creates four independent pieces. IDs and colors are currently coupled: 0=red, 1=green, 2=yellow, 3=blue.
 
-`Piece` stores `player_id`, `piece_id`, and `position`, defaulting to `YARD`. `@dataclass` generates initialization. `__str__` supplies readable output.
+`GameState` holds players, current-player index, current roll, and remaining rolls. The index selects a player from the list; it is not inherently a player ID. `initial_state(2 or 4)` creates fresh objects; two-player games currently use adjacent red/green seats.
 
-`Color` is an `IntEnum`: red=0, green=1, yellow=2, blue=3. The current implementation automatically assigns `Color(player_id)`. IDs and colors are therefore coupled by design at present.
+`Move(player_id, piece_ids)` records one choice, e.g. `Move(0, (1, 2))` selects red's pieces 1 and 2. Its constructor checks IDs and selection size; the rules decide whether that pair can move now. Creating a Move does not move anything.
 
-`Player` creates four separate pieces in `__post_init__`. `field(init=False)` means callers do not supply its pieces or color.
+`GameResult` records outcome, seed/settings, turn/move counts, cutoff status, and rejected-choice/forfeiture totals. A turn is a collected roll sequence; a move is one applied single/pair action. A cutoff is not a declared draw.
 
-```python
-from Game.models import Piece, Player
+## 2. Dice and legal moves
 
-piece = Piece(player_id=0, piece_id=2)
-player = Player(1)  # GREEN; owns four pieces numbered 0–3.
-print(piece)
-print(player)
+`Dice(seed)` owns a private random generator. Reusing it produces a reproducible sequence; do not recreate it before each roll. Dice returns numbers; the engine controls when to roll.
+
+`Game/rules.py` separates questions:
+
+- `destination_for_roll()` calculates single-piece progress: yard + six → 1; 56 + two → no destination.
+- `to_absolute()` maps relative progress to a shared square; yard/home/finish return `None`.
+- Occupancy, safety, and blockade helpers inspect the shared board without moving pieces.
+- `move_destination()` handles the selected single or pair; an even roll moves a pair half the distance.
+- `can_land()` checks destination occupancy; path checks enforce blockade restrictions.
+- `legal_moves()` tries single/pair selections for the current player and returns all permitted choices. It does not choose one.
+- `has_won()` checks whether all four pieces of a player have finished.
+
+Shared validation helpers check types/ranges and resolve player/piece IDs. Model checks remain in `models.py`; mutable fields are not automatically validated on every assignment.
+
+## 3. Engine: one roll versus a whole turn
+
+In `Game/engine.py`:
+
+- `roll_turn()` collects rolls until a non-six or the third six. Three sixes cancel the turn before movement. Otherwise it stores the first roll and the remaining sequence.
+- `apply_move()` validates and applies one move and any capture. It does not consume the pending roll.
+- `play_turn()` resolves one pending roll: apply a move or forced pass, then use the next stored roll or advance the player. A win discards unused rolls and ends play.
+- `forfeit_turn()` discards unused rolls and advances once, preserving earlier moves.
+
+Example: `[6, 6, 4]` is collected once, then resolved with three calls to `play_turn()`, recalculating choices after each action. Remaining rolls are visible before choosing.
+
+## 4. Agents, recovery, and human play
+
+`run_game.py` creates seeded random agents, runs turns until a winner or turn limit, and returns a `GameResult`.
+
+`play_agent_roll()` gives the agent fresh deep copies of state and legal choices on every attempt. Hypothetical changes therefore stay out of the real board. The engine validates the returned choice against the real state. `InvalidMoveError` permits retries; after three rejected choices, the caller handles `AgentRetryLimitError` by forfeiting the remaining turn. Unexpected programming errors still propagate.
+
+With no legal moves, the caller passes automatically without asking an agent. Rejections and forfeitures have separate counters; they are not valid moves.
+
+`human_play.py` lets red choose numbered moves against three random agents. It prints a compact position table and move/capture/pass updates. Bad text or out-of-range choices prompt again; `q` or end-of-input quits without saving a completed trial. Its display is separate from the engine rules.
+
+## 5. Results and experiments
+
+`save_result()` validates a record and appends one JSON object per line (JSONL). `load_results()` reconstructs and validates each `GameResult`. `validate_results()` checks field types/ranges and relationships such as cutoffs having no winner and forfeitures requiring rejected choices.
+
+`summarize_results()` validates before calculating totals. Its win rates use completed games only; mean turns/moves include cutoffs.
+
+`prepare_run()` creates or checks `config.json` and returns the `games.jsonl` path. Current settings record schema version 2, random agents, rotating starts, and the three-attempt forfeiture policy. These labels document behavior; they do not dynamically configure the engine.
+
+`run_batch()` requires a fresh results file. `run_experiment()` resumes a directory: game ID `i` uses seed `base_seed + i` and starting seat `i % num_players`. It checks experiment membership and duplicate IDs, skips saved games, and appends new ones. This supports one writer; parallel writes and automatic damaged-file repair are not implemented. Older incompatible records/settings are not silently migrated.
+
+## 6. Checks and next work
+
+From this directory:
+
+```bash
+python3 Check.py                          # Temporary-folder resume demo
+python3 -m unittest Check -q              # Foundation checks
+python3 -m unittest discover -s Tests -q  # Main suite
 ```
 
-Player IDs must be integers 0–3. Piece fields and later assignments are not yet validated. Printing a list uses element representations; Player uses `str(piece)` and newline joining to display each piece's custom string.
+Passing tests supports the tested behavior, not a proof of all game rules. Full transition tracing/review and persistent human-interface tests remain pending. Then come heuristics and the RL interface; rewards will remain separate from game rules.
 
-## 3. Game state and fresh matches — `Game/models.py`
-
-`GameState` stores players, `current_player_index=0`, and `dice_roll=None`. `current_player()` selects by list index, not player ID.
-
-`initial_state(num_players)` is a standalone function: it creates a new state without requiring an existing one. Only integer counts 2 and 4 are accepted.
-
-```python
-from Game.models import initial_state
-
-state = initial_state(4)
-assert state.current_player() is state.players[0]
-assert state.dice_roll is None
-```
-
-Two-player creation currently selects IDs 0 and 1: red and green. Final seating/starting-player policies remain open. Each factory call creates fresh objects. A state itself is mutable, not an independent saved-game copy; full validation, winner detection, and any rule-history fields are still future work.
-
-## 4. Seeded dice — `Game/dice.py`
-
-`random.Random(seed)` creates a private generator once in `Dice.__init__`. `roll()` asks it for an integer from 1 through 6.
-
-```python
-from Game.dice import Dice
-
-first, second = Dice(42), Dice(42)
-assert [first.roll() for _ in range(5)] == [second.roll() for _ in range(5)]
-```
-
-The same seed and calls reproduce the same sequence. Do not recreate the generator before each roll. Dice does not change game state; the future engine will control when rolls are permitted and store pending rolls.
-
-## 5. Candidate destinations — `Game/rules.py`
-
-`destination_for_roll(position, dice_roll)` rejects invalid types/ranges, then returns a destination or `None`:
-
-- Yard: six releases to position 1; other rolls cannot move.
-- Finished: cannot move again.
-- Otherwise: add the roll; overshooting 57 cannot move.
-
-```python
-from Game.rules import destination_for_roll
-
-assert destination_for_roll(0, 6) == 1
-assert destination_for_roll(51, 1) == 52
-assert destination_for_roll(55, 2) == 57
-assert destination_for_roll(56, 2) is None
-```
-
-This uses six-to-release, exact finish, and no bounce. It does not modify a piece or check captures/blockades. A candidate destination is not yet a fully legal move.
-
-## 6. Shared-board helpers — `Game/rules.py`
-
-- `to_absolute(color, position)` maps progress to a shared square; yard/home/finish return `None`.
-- `pieces_at(state, square)` returns all pieces occupying that absolute square.
-- `is_safe_square(square)` checks the eight safe squares: 1, 9, 14, 22, 27, 35, 40, 48.
-- `count_pieces_at(state, square, player_id)` counts one participating player's occupants.
-
-These helpers do not move pieces or enforce captures/blockades. Agreed rule: opposing single pieces cannot pass a blockade on an unsafe square, but can pass it on a safe square. See [RULES.md](RULES.md) for pair movement and remaining decisions.
-
-## Checks and next discussion
-
-From this folder, `python3 Check.py` prints only the current piece-count demo. Run `python3 -m unittest Check -q` for the nine foundation tests. Mapping, occupancy, safety, and counting have also been checked separately; those checks are not all preserved in the unittest suite. Passing these checks does not validate the unimplemented game rules.
-
-Next: blockade detection, remaining interaction-rule decisions, and legal-move generation. No complete engine loop or agents are implemented yet.
-
-The eventual engine will apply moves, handle turns/winning, and emit events. Agents choose actions; the RL interface encodes observations and calculates rewards separately from rules.
-
-Track assignments in [Infrastructure_Progress.md](Infrastructure_Progress.md) and research decisions in [Research_Progress.md](Research_Progress.md).
-
-## Shared validation helpers
-
-`Game/rules.py` now centralizes repeated checks: `validate_roll()` (1–6), `validate_position()` (0–57), `validate_square()` (1–52), and `validate_color()`. Numeric checks share `validate_int_range()`. `get_player()` finds participants by ID; `get_move_pieces()` returns the player and selected pieces. Model constructor checks remain in `models.py` to avoid circular imports. Method-specific rules remain with their methods. The unfinished `can_land()` currently validates inputs only.
-
-Full current checks: `python3 -m unittest Check Tests.test_rules_validation -q` (14 tests). The short `Check.py` demo is unchanged.
+See [Rules.md](Rules.md) for the variant and [Infrastructure_Progress.md](Infrastructure_Progress.md) for task status.

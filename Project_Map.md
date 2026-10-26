@@ -1,50 +1,48 @@
 # Ludo RL — Project Map
 
-Updated: October 2, 2026. Tasks 1–9, 11, and 12 complete; Task 10 records rules with open edge cases; future file organization is flexible.
+Updated October 26, 2026. Working engine and experiment infrastructure; full audit and RL remain pending.
 
 ## Current files
 
-Inside `Environment and Implementation/`:
+Paths below are relative to `Environment and Implementation/`.
 
-| File | Role |
+| File | Responsibility |
 |---|---|
-| `Game/constants.py` | Position boundaries, starts, safe squares, and piece count |
-| `Game/models.py` | Piece, Color, Player, GameState, initial_state |
-| `Game/dice.py` | Private seeded dice generator |
-| `Game/rules.py` | Destinations, coordinate mapping, occupancy, safety, and piece counts |
-| `Check.py` | Nine foundation tests plus a current-task demo |
-| `README.md` | Project introduction and run command |
-| `Code_Walkthrough.md` | Explanation of current code |
-| `Infrastructure_Progress.md` | Task status and checks |
-| `Research_Progress.md` | Literature, candidate questions, advisor direction |
-| `Project_Map.md` | This overview |
-
-There are seven main subfolders: `Game`, `Agents`, `RL`, `Experiments`, `Configs`, `Tests`, and `Results`. Currently, five Python files and five Markdown documents make up the implementation workspace; generated caches and Git metadata are excluded. No fixed final file count is required.
-
-## Future components (not implemented)
-
-| Folder | Planned responsibilities |
-|---|---|
-| `Game/` | Extend rules with interactions/legal moves; add engine and events |
-| `Agents/` | Common interface, random player, heuristic players |
-| `RL/` | Environment wrapper, observations, rewards, PPO and self-play training |
-| `Experiments/` | Run configurations, evaluate policies, analyze metrics |
-| `Configs/` | Reproducible experiment settings |
-| `Tests/` | Split checks here if they outgrow `Check.py` |
-| `Results/` | Generated checkpoints, logs, tables, plots |
+| `Game/constants.py` | Route boundaries, color starts, safe squares |
+| `Game/models.py` | Pieces, players, state, moves, results, fresh matches |
+| `Game/dice.py` | Private seeded random generator |
+| `Game/rules.py` | Validation, board mapping, destinations, landing/path legality, winning |
+| `Game/engine.py` | Apply moves/captures, collect rolls, resolve rolls, forfeit turns |
+| `Game/errors.py` | Invalid-move and agent retry-limit exceptions |
+| `Agents/random_agent.py` | Choose randomly from legal moves |
+| `run_game.py` | Automated game loop and agent snapshot/retry handling |
+| `human_play.py` | Human-versus-random terminal interface |
+| `Experiments/results_io.py` | Validate, append, and load game summaries |
+| `Experiments/run_config.py` | Create/reuse compatible experiment settings |
+| `Experiments/batch.py` | Fresh batches, resumable runs, summary statistics |
+| `Check.py` | Foundation tests and a short resume demonstration |
+| `Tests/` | Rule, engine, runner, recovery, and storage tests |
+| `Results/` | Generated experiment files; not source code |
 
 ## Connections
 
 ```text
-Current: initial_state → GameState → Players → Pieces
-         Dice → roll value
-         rules → candidate destination using constants
+Human input / random agent → selected Move
+                                  ↓
+runner → engine → rules → GameState → Players → Pieces
+           ↑
+       seeded Dice
 
-Planned: configuration → training → RL interface → game engine
-                              ↓
-                         saved policies → evaluation → analysis → findings
+experiment settings → run_game → GameResult → JSONL → summary
 ```
 
-The engine will coordinate the current components, enforce rules, and record events. Rewards belong in the RL layer. No complete game loop exists yet.
+Agents receive copies when called through `play_agent_roll()`; only the engine applies their choice to the live state. Human play uses a separate entry point and does not save random-only research records.
 
-Next discussion: blockade detection and remaining interaction rules, then legal moves. Continue one approved task at a time, with tests. A complete random-agent game comes before PPO.
+## Pending work
+
+1. Finish interface verification; trace and audit complete games against the written rules.
+2. Add heuristic opponents and configurable agent assignments. Rotating the starting player is not the same as rotating agent types through seats.
+3. Build the RL interface: observations, single/pair actions, legal masks, and separate reward calculation.
+4. Connect PPO/self-play, held-out evaluation, behavior metrics, multiple seeds, and uncertainty estimates.
+
+Future organization under `RL/` and `Configs/` is flexible; folder names do not imply implemented functionality. Persistent transition logs and RL training are not implemented.

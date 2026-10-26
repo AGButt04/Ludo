@@ -118,7 +118,7 @@ Return to the optional trace after the newly prioritized Tasks 28–29. The full
 
 ## Task 32 — Refresh the project documents
 
-**Status:** Planned. **Files:** `README.md`, `Project_Map.md`, `Code_Walkthrough.md`, `Rules.md`.
+**Status:** Complete (October 26, 2026). Updated implemented features, run commands, component connections, snapshots/recovery, result validation, and research-relevant rules. Audit/interface verification and RL remain explicitly pending. Document links checked; 52 main tests and 9 foundation checks pass. **Files:** `README.md`, `Project_Map.md`, `Code_Walkthrough.md`, `Rules.md`.
 **Why:** Both chats and the student need an accurate description of the code.
 Update stale implementation claims; distinguish working features from pending verification. Keep the notes short. Then resume Task 21: explain the trace format before implementing it.
 

@@ -117,9 +117,6 @@ def run_experiment(
     saved_game_ids = set()
 
     for result in results:
-        if type(result.seed) is not int:
-            raise ValueError("Saved seed must be an integer.")
-
         game_id = result.seed - base_seed
 
         if not 0 <= game_id < target_games:
@@ -133,19 +130,6 @@ def run_experiment(
 
         if game_id in saved_game_ids:
             raise ValueError("This game appears more than once in the results.")
-        
-        if type(result.truncated) is not bool:
-            raise ValueError("Saved cutoff status must be a boolean.")
-
-        if result.truncated:
-            if result.winner_id is not None:
-                raise ValueError("A cutoff game cannot have a winner.")
-        else:
-            if type(result.winner_id) is not int:
-                raise ValueError("A completed game must have an integer winner ID.")
-
-            if not 0 <= result.winner_id < num_players:
-                raise ValueError("Winner ID must identify a participating player.")
         
         saved_game_ids.add(game_id)
     
@@ -165,12 +149,10 @@ def run_experiment(
             starting_player_index=game_id % num_players,
         )
 
-        validate_results(result)
         save_result(result, str(results_path))
         results.append(result)
         new_games += 1
     
     results.sort(key=lambda result: result.seed)
     return results
-
 
