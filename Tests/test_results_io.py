@@ -1,15 +1,56 @@
 """Check result storage using temporary files, not real research results."""
 import json
 import unittest
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from Game.models import GameResult
 from Experiments.results_io import save_result, load_results, validate_results
+from Experiments.batch import summarize_results
 
 
 class ResultsIOChecks(unittest.TestCase):
+    def test_impossible_totals_rejected_at_all_boundaries(self):
+        base = GameResult(None, 0, 4, 0, 1, 1, 0, True, 0, 0)
+        cases = [
+            replace(base, winner_id=0, truncated=False, turns_played=0),
+            replace(base, winner_id=0, truncated=False),
+            replace(base, moves_played=4),
+            replace(base, moves_played=1, invalid_choices=100),
+            replace(base, moves_played=1, invalid_choices=3),
+        ]
+        for field in ('turns_played', 'moves_played', 'invalid_choices', 'forfeited_turns'):
+            for value in (-1, True, 1.5, '2'):
+                cases.append(replace(base, **{field: value}))
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / 'games.jsonl'
+            for bad in cases:
+                with self.subTest(record=bad):
+                    path.write_text('unchanged\n')
+                    with self.assertRaises((TypeError, ValueError)):
+                        save_result(bad, str(path))
+                    self.assertEqual(path.read_text(), 'unchanged\n')
+                    path.write_text(json.dumps(asdict(bad)) + '\n')
+                    with self.assertRaises((TypeError, ValueError)):
+                        load_results(str(path))
+                    with self.assertRaises((TypeError, ValueError)):
+                        summarize_results([bad])
+
+    def test_counter_boundaries_round_trip(self):
+        # These are summary bounds, not proof that a particular game occurred.
+        records = [
+            GameResult(None, 0, 4, 0, 1, 1, 3, True, 6, 0),
+            GameResult(None, 1, 4, 0, 1, 1, 2, True, 7, 1),
+            GameResult(None, 2, 4, 0, 1, 1, 0, True, 0, 0),
+        ]
+        with TemporaryDirectory() as folder:
+            path = str(Path(folder) / 'games.jsonl')
+            for result in records:
+                save_result(result, path)
+            self.assertEqual(load_results(path), records)
+            self.assertEqual(summarize_results(records)['cutoffs'], 3)
+
     def test_forfeitures_require_rejections(self):
         result = GameResult(None, 0, 4, 0, 2, 2, 0, True, 6, 2)
         validate_results(result)

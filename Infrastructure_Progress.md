@@ -1,12 +1,10 @@
 # Infrastructure Progress
 
-Updated October 16, 2026. Tasks 1–20 and 22–25 are complete; Tasks 26–27 are complete; next return to deferred Task 21. Rule decisions and remaining questions live in [Rules.md](Rules.md).
+Updated October 26, 2026. Engine, random/human play, experiment storage, and robustness work are implemented. Task 29 verification and Task 21 gameplay audit remain unfinished. Rules live in [Rules.md](Rules.md).
 
-## Current focus — Understand the existing code
+## Current focus — Audit actual gameplay
 
-The student requested a code-understanding phase; on October 18 they selected Tasks 28–29 for the next session (October 19), with explanations before implementation. Work through small reading groups: student writes purpose/input/output/side-effect comments, then explains concrete examples; review comments and ask prediction questions before advancing. Correct inaccurate comments briefly, as requested; let the student draft each new group first.
-
-October 18 bookmark: reviewed models, dice, movement/mapping, occupancy, blockades, legal choices, and `apply_move()`. Reviewed/corrected comments for `roll_turn()` and `play_turn()` at the end of the session; start next time with a brief explanation check for those two. Validation/lookup helpers and `has_won()` still need a focused review, followed by agents/runner and results/configuration/batches. Understanding review is not yet complete; Task 21 remains deferred.
+Result validation is finished for the agreed scope. Next: Task 21, starting with a small state-snapshot helper, then optional transition logging and independent rule checks. Keep explanations brief and let the student implement each explained portion. Historical task entries below retain their original test counts.
 
 ## Completed tasks
 
@@ -39,7 +37,7 @@ October 18 bookmark: reviewed models, dice, movement/mapping, occupancy, blockad
 
 ## Current verification and usage
 
-- Last regression run (October 17): **49 tests passed**. Batch checks also covered repeatability, file preservation, empty/all-cutoff inputs, and mixed player-count rejection.
+- Latest regression run (October 26): **54 main tests + 9 foundation checks passed**. Batch checks also covered repeatability, file preservation, empty/all-cutoff inputs, and mixed player-count rejection.
 - `python3 Check.py`: resume demo in a temporary folder—save two games, resume to five, then call again with no new games. Checks preserved results and unchanged file; temporary files are automatically removed.
 - `python3 run_game.py`: one random-agent game with a short outcome summary.
 - Win rates use completed games; average turns/moves include all games. Cutoffs are reported separately, not treated as draws or losses.
@@ -52,15 +50,17 @@ Full regression command (from this folder):
 python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves Tests.test_engine Tests.test_turns Tests.test_runner Tests.test_results_io Tests.test_run_config Tests.test_experiment -q
 ```
 
-## Task 21 — Full-game audit (deferred)
+## Task 21 — Full-game audit (next)
 
-Postponed at the student's request; not implemented or reviewed. Return before relying on experimental findings.
+Status: Starting next. Persistent trace and full-game review are not implemented/completed. Return before relying on experimental findings.
 
 1. **Trace:** Add optional logging in `run_game.py` and a new `Game/audit.py`. Record settings, full roll sequences (including cancelled turns), legal choices, selected move/pass, captures, all piece positions before/after, and next player. Include relative and absolute positions; preserve cancelled rolls without extra dice calls.
 2. **Check transitions:** Verify movement, captures, safe squares, blockades, occupancy, finishing, forced passes, and turn changes. Report seed/turn on failure. Use hand-calculated cases as well as automated checks; reusing legal_moves alone can repeat its bugs.
 3. **Review:** Inspect one full seeded four-player game in manageable sections, then check multiple seeds/player counts/starting seats. Confirm logging does not change gameplay. Record coverage, fixes, and remaining gaps before marking complete.
 
-Return to the optional trace after the newly prioritized Tasks 28–29. The full audit is still unfinished.
+**First small coding step:** Create `Game/audit.py` with `snapshot_state(state) -> dict`. Copy the current player ID, pending roll, remaining rolls, and each piece's owner/ID/relative position/shared square into plain dictionaries/lists. The snapshot must stay unchanged when the live state later moves. No file writing yet.
+
+Next, use snapshots around rolls/actions to explain transitions; an audit log records evidence, not a verdict that the rules are correct.
 
 ## Task 26 — Reuse the demo and identify experiment runs
 
@@ -86,7 +86,7 @@ Return to the optional trace after the newly prioritized Tasks 28–29. The full
 
 **Check:** Resumed results equal an uninterrupted run; no duplicates or changed earlier lines; seeds/seats stay consistent; changed settings, duplicate IDs, and malformed records fail before new games are appended. One process writes each run—parallel writers and automatic recovery are deferred.
 
-**Next-session order:** Tasks 30–32 below, then return to Task 21 trace and review. Finish Task 29 verification alongside the audit. No RL libraries yet.
+**Next-session order:** Task 21 snapshots, trace, and review. Finish Task 29 verification alongside the audit. No RL libraries yet.
 
 ## Task 28 — Recover from invalid choices
 
@@ -110,17 +110,24 @@ Return to the optional trace after the newly prioritized Tasks 28–29. The full
 
 ## Task 31 — Validate saved game results
 
-**Status:** Complete. Validation runs before saving, after loading, and before summary calculations. Field types, counters, player/seat ranges, turn limits, outcomes, seeds, and forfeiture/rejection consistency checked. All 52 tests in `Tests/` pass. **Files:** `Experiments/results_io.py`, `Experiments/batch.py`.
+**Status:** Complete for the agreed scope. Counter consistency checks now reject the reproduced failures through saving, loading, and summaries; valid boundaries pass. Invalid saves preserve existing files. 54 main tests and 9 foundation checks pass. Summary validation is not a gameplay audit. **Files:** `Experiments/results_io.py`, `Experiments/batch.py`.
 **Why:** Corrupted records must not enter research statistics.
 1. Add one reusable result validator: strict field types (reject booleans as integers), valid IDs/settings, nonnegative counters, and consistent turns/outcomes.
 2. Use it before saving, after loading, and before summarizing. Keep experiment-specific seed/seat checks in `run_experiment()`.
 **Check:** Reject negative counters, invalid types, and inconsistent winner/cutoff records; valid records still round-trip. Never silently repair old records.
+
+**Completed follow-up checks:**
+1. Require saved games to have at least one turn; completed wins must have at least one move. Reject `moves_played > 3 * turns_played` (at most three usable rolls per turn).
+2. Reject `invalid_choices > 2 * moves_played + 3 * forfeited_turns`: a successful move permits at most two earlier rejections, a forfeiture exactly three, and a forced pass none.
+3. Add regression checks through saving, loading, and summaries, including valid boundary cases. These bounds detect impossible totals; they do not prove a game's transitions were legal.
 
 ## Task 32 — Refresh the project documents
 
 **Status:** Complete (October 26, 2026). Updated implemented features, run commands, component connections, snapshots/recovery, result validation, and research-relevant rules. Audit/interface verification and RL remain explicitly pending. Document links checked; 52 main tests and 9 foundation checks pass. **Files:** `README.md`, `Project_Map.md`, `Code_Walkthrough.md`, `Rules.md`.
 **Why:** Both chats and the student need an accurate description of the code.
 Update stale implementation claims; distinguish working features from pending verification. Keep the notes short. Then resume Task 21: explain the trace format before implementing it.
+
+**Follow-up complete:** Refreshed this file's opening/focus/verification and `Research_Progress.md`'s engineering status. Historical task counts remain labeled as history. Next is Task 21's persistent trace and independent rule audit.
 
 ## Workflow
 

@@ -32,8 +32,8 @@ def validate_results(result: GameResult) -> None:
     if type(result.turns_played) is not int:
         raise TypeError("Turns played has to be an integer.")
 
-    if result.turns_played < 0:
-        raise ValueError("Turns played cannot be negative.")
+    if result.turns_played <= 0:
+        raise ValueError("Turns played must be positive.")
 
     if type(result.moves_played) is not int:
         raise TypeError("Moves played has to be an integer.")
@@ -90,8 +90,17 @@ def validate_results(result: GameResult) -> None:
         if not 0 <= result.winner_id < result.num_players:
             raise ValueError("Winner ID is outside the player range.")
     
+    if not result.truncated and result.moves_played == 0:
+        raise ValueError("A completed win must include at least one move.")
+
     if type(result.seed) is not int:
         raise TypeError("The seed must be an integer.")
 
     if result.invalid_choices < 3 * result.forfeited_turns:
         raise ValueError("Each forfeited turn requires three invalid choices.")
+
+    if result.moves_played > 3 * result.turns_played:
+        raise ValueError("Moves played cannot exceed three per turn.")
+
+    if result.invalid_choices > 2 * result.moves_played + 3 * result.forfeited_turns:
+        raise ValueError("Invalid choices exceed the allowed attempts for moves and forfeitures.")

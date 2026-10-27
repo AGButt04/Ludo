@@ -92,9 +92,9 @@ Keep the PPO implementation, network architecture, board representation, rules, 
 
 ## Current progress and next steps
 
-- **Completed:** Initial review of four Ludo papers and candidate-question refinement. Infrastructure now includes constants, models, fresh matches, seeded dice, destinations, shared-board mapping, occupancy, safety, and piece counts. Foundation tests and targeted helper checks pass.
+- **Completed:** Initial review of four Ludo papers and candidate-question refinement. Infrastructure now includes complete random-agent games, human terminal play, resumable experiments, result validation, and agent-state isolation. Latest local checks: 54 main tests and nine foundation checks pass; this does not establish full gameplay correctness.
 - **Not yet completed:** Broader novelty search, complete validated game engine, or training experiments.
-- **Next engineering step:** Implement blockade detection, resolve remaining rule edge cases, then build legal moves and turn handling.
+- **Next engineering step:** Add optional transition snapshots/logs and audit gameplay against hand-calculated rule cases. Persistent human-interface tests remain pending; heuristic agents follow the audit.
 - **Advisor direction:** The minimum deliverable is a working research platform. Build and validate infrastructure during Fall; use Spring for experiments and research findings. Novelty, baselines, behavior measurements, and the two-player pilot remain discussion topics.
 
 **Infrastructure targets (tentative):** October—complete random-agent games; November—heuristic agents and logs; December—verification, fixes, and demonstration before January 2027.
