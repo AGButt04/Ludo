@@ -6,8 +6,10 @@ Run all checks when needed: python3 -m unittest Check -v
 import unittest
 
 from Game import constants as board
-from Game.models import Color, GameState, Piece, Player, initial_state
+from Game.models import Color, GameState, Piece, Player, initial_state, Move
 from Game.dice import Dice
+from Game.audit import snapshot_state
+from Game.engine import play_turn
 
 class FoundationChecks(unittest.TestCase):
     def test_dice(self):
@@ -112,26 +114,21 @@ class FoundationChecks(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    from tempfile import TemporaryDirectory
-    from pathlib import Path
-    from Experiments.batch import run_experiment
+    state = initial_state(4)
+    state.players[0].pieces[0].position = 14
+    state.players[1].pieces[0].position = 3
+    state.dice_roll = 2
 
-    # A fresh temporary folder makes the demo repeatable without cluttering Results/.
-    # Python removes it automatically when this block finishes.
-    with TemporaryDirectory() as run_dir:
-        first = run_experiment(target_games=5, run_dir=run_dir, max_new_games=2)
-        print("Call 1: requested 5, allowed 2 new games.")
-        print("Saved game IDs:", [result.seed for result in first])  # Base seed is 0.
+    before = snapshot_state(state)
+    play_turn(state, Move(0, (0,)))
+    after = snapshot_state(state)
 
-        resumed = run_experiment(target_games=5, run_dir=run_dir)
-        print("Call 2: resumed. New games:", len(resumed) - len(first))
-        print("Saved game IDs:", [result.seed for result in resumed])
-        print("First two results preserved:", resumed[:2] == first)
+    assert after["pieces"][0]["position"] == 16
+    assert after["pieces"][4]["position"] == 0
 
-        results_path = Path(run_dir) / "games.jsonl"
-        before = results_path.read_bytes()
-        repeated = run_experiment(target_games=5, run_dir=run_dir)
-        print("Call 3: already complete. New games:", len(repeated) - len(resumed))
-        print("File unchanged:", results_path.read_bytes() == before)
+    for index in range(16):
+        if index not in (0, 4):
+            assert before["pieces"][index] == after["pieces"][index]
 
-    print("Demo finished; temporary files cleaned up. Your Results/ folder was untouched.")
+    print("Red moved to:", after["pieces"][0]["position"])
+    print("Green returned to:", after["pieces"][4]["position"])
