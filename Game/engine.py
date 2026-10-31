@@ -57,7 +57,7 @@ def apply_move(state: GameState, move: Move, dice_roll: int) -> None:
     for piece in selected_pieces:
         piece.position = move_des
     
-def roll_turn(state: GameState, dice: Dice) -> None:
+def roll_turn(state: GameState, dice: Dice) -> list[int]:
     # Collect the full turn's rolls before any moves; three sixes cancel the turn.
 
     # First, we check if the game is not over.
@@ -86,11 +86,12 @@ def roll_turn(state: GameState, dice: Dice) -> None:
             state.dice_roll = None
             state.remaining_rolls = []
             state.current_player_index = (state.current_player_index + 1) % len(state.players)
-            return
+            return rolls
 
     # Store the first roll for the next choice, and the later rolls in order.
     state.dice_roll = rolls[0]
     state.remaining_rolls = rolls[1:]
+    return rolls
 
 def play_turn(state: GameState, move: Move | None) -> None:
     # Resolve one supplied choice or forced pass, then consume the current stored roll.

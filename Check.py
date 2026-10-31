@@ -10,6 +10,8 @@ from Game.models import Color, GameState, Piece, Player, initial_state, Move
 from Game.dice import Dice
 from Game.audit import snapshot_state
 from Game.engine import play_turn
+from Game.audit import make_transition
+from pprint import pprint
 
 class FoundationChecks(unittest.TestCase):
     def test_dice(self):
@@ -122,6 +124,8 @@ if __name__ == "__main__":
     before = snapshot_state(state)
     play_turn(state, Move(0, (0,)))
     after = snapshot_state(state)
+    transition = make_transition(before, Move(0, (0,)), after)
+    pprint(transition)
 
     assert after["pieces"][0]["position"] == 16
     assert after["pieces"][4]["position"] == 0

@@ -5,8 +5,10 @@ from Game.rules import legal_moves, has_won
 from Game.engine import play_turn, roll_turn, forfeit_turn
 from Game.errors import InvalidMoveError, AgentRetryLimitError
 from copy import deepcopy
+from Game.audit import snapshot_state, make_transition
+from dataclasses import asdict
 
-def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) -> GameResult:
+def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0, trace=None) -> GameResult:
     if type(seed) is not int:
         raise TypeError("Seed must be an integer.")
     if type(max_turns) is not int:
@@ -43,8 +45,28 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) 
         r_agent = RandomAgent(seed + 1 + player.player_id)
         random_agents[player.player_id] = r_agent
 
+    if trace is not None:
+        trace.append({
+            "event": "start", "trace_version": 1, "seed": seed,
+            "num_players": num_players, "starting_player_index": starting_player_index,
+            "max_turns": max_turns, "agent_type": "random",
+            "max_invalid_attempts": 3, "invalid_action_policy": "forfeit_remaining_turn",
+            "state": snapshot_state(state),
+        })
+
     for turn in range(max_turns):
-        roll_turn(state, dice)
+        before_roll = snapshot_state(state) if trace is not None else None
+        rolls = roll_turn(state, dice)
+
+        if trace is not None:
+            trace.append({
+                "event": "roll",
+                "rolls": rolls,
+                "cancelled": rolls == [6, 6, 6],
+                "before": before_roll,
+                "after": snapshot_state(state),
+                "turn": turn + 1,
+            })
 
         while state.dice_roll is not None:
             current_player = state.current_player()
@@ -52,11 +74,15 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) 
             rejections = []
 
             try:
-                moved = play_agent_roll(state, agent, rejections)
+                moved = play_agent_roll(state, agent, rejections, trace=trace, turn=turn + 1)
             except AgentRetryLimitError:
                 game_result.invalid_choices += len(rejections)
                 game_result.forfeited_turns += 1
+                before_forfeit = snapshot_state(state) if trace is not None else None
                 forfeit_turn(state)
+                if trace is not None:
+                    trace.append({"event": "forfeit", "turn": turn + 1,
+                                  "before": before_forfeit, "after": snapshot_state(state)})
                 break
             game_result.invalid_choices += len(rejections)
 
@@ -67,20 +93,32 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0) 
                 game_result.winner_id = current_player.player_id
                 game_result.turns_played = turn + 1
                 game_result.truncated = False
+                if trace is not None:
+                    trace.append({"event": "end", "reason": "winner",
+                                  "result": asdict(game_result), "state": snapshot_state(state)})
                 
                 return game_result
     
     game_result.winner_id = None
     game_result.turns_played = max_turns
     game_result.truncated = True
+    if trace is not None:
+        trace.append({"event": "end", "reason": "turn_limit",
+                      "result": asdict(game_result), "state": snapshot_state(state)})
 
     return game_result
 
-def play_agent_roll(state, agent, rejections: list[str]) -> bool:
+def play_agent_roll(state, agent, rejections: list[str], trace=None, turn=None) -> bool:
+    before = snapshot_state(state) if trace is not None else None
     moves = legal_moves(state, state.dice_roll)
 
     if not moves:
         play_turn(state, None)
+
+        if trace is not None:
+            after = snapshot_state(state)
+            trace.append(make_transition(before, None, after, choices=moves, turn=turn))
+
         return False
     
     for attempt in range(3):
@@ -90,7 +128,16 @@ def play_agent_roll(state, agent, rejections: list[str]) -> bool:
             play_turn(state, move)
         except InvalidMoveError as error:
             rejections.append(str(error))
+            if trace is not None:
+                trace.append({"event": "rejection", "turn": turn,
+                              "attempt": attempt + 1, "choice": repr(move),
+                              "reason": str(error), "before": before,
+                              "after": snapshot_state(state)})
             continue
+
+        if trace is not None:
+            after = snapshot_state(state)
+            trace.append(make_transition(before, move, after, choices=moves, turn=turn))
 
         return True
     
