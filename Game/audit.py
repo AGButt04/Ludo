@@ -48,6 +48,7 @@ def save_trace(trace: list[dict], path: str) -> None:
     """Save one game's audit records without replacing an existing file."""
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
+    
     with target.open("x", encoding="utf-8") as file:
         for record in trace:
             file.write(json.dumps(record) + "\n")
