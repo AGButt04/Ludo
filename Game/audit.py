@@ -19,7 +19,7 @@ def snapshot_state(state: GameState) -> dict:
             }
 
             curr_state["pieces"].append(piece_dict)
-    
+
     return curr_state
 
 def make_transition(before, move, after, choices=(), turn=None) -> dict:
@@ -48,7 +48,7 @@ def save_trace(trace: list[dict], path: str) -> None:
     """Save one game's audit records without replacing an existing file."""
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with target.open("x", encoding="utf-8") as file:
         for record in trace:
             file.write(json.dumps(record) + "\n")

@@ -1,9 +1,8 @@
 from Game.models import GameResult
 from run_game import run_game
-from Experiments.results_io import save_result, load_results
+from Experiments.results_io import save_result, load_results, validate_results
 from Experiments.run_config import prepare_run
 from pathlib import Path
-from Experiments.results_io import validate_results
 
 def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players: int = 4, max_turns: int = 10000) -> list[GameResult]:
     for name, value in (
@@ -11,7 +10,7 @@ def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players:
         ("base_seed", base_seed),
         ("num_players", num_players),
         ("max_turns", max_turns)
-    ):    
+    ):
         if type(value) is not int:
             raise TypeError(f"{name} must be an integer")
 
@@ -20,10 +19,10 @@ def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players:
 
     if num_players not in (2, 4):
         raise ValueError("num_players must be 2 or 4")
-    
+
     if Path(output_path).exists():
         raise FileExistsError("Use a new output file for this batch.")
-    
+
     results = []
 
     for game in range(num_games):
@@ -33,13 +32,13 @@ def run_batch(num_games: int, output_path: str, base_seed: int = 0, num_players:
         result = run_game(num_players, seed, max_turns, starting_player_index)
         results.append(result)
         save_result(result, output_path)
-    
+
     return results
 
 def summarize_results(results: list[GameResult]) -> dict:
     for result in results:
         validate_results(result)
-    
+
     if results:
         num_players = results[0].num_players
 
@@ -56,8 +55,8 @@ def summarize_results(results: list[GameResult]) -> dict:
     if results:
         for player_id in range(num_players):
             wins[player_id] = 0
-    
-    for result in results:        
+
+    for result in results:
         total_moves += result.moves_played
         total_turns += result.turns_played
 
@@ -89,8 +88,8 @@ def summarize_results(results: list[GameResult]) -> dict:
 
 def run_experiment(
     target_games: int,
-    run_dir: str, 
-    base_seed: int = 0, 
+    run_dir: str,
+    base_seed: int = 0,
     num_players: int = 4,
     max_turns: int = 10000,
     max_new_games = None
@@ -113,7 +112,7 @@ def run_experiment(
         results = load_results(str(results_path))
     else:
         results = []
-    
+
     saved_game_ids = set()
 
     for result in results:
@@ -130,9 +129,9 @@ def run_experiment(
 
         if game_id in saved_game_ids:
             raise ValueError("This game appears more than once in the results.")
-        
+
         saved_game_ids.add(game_id)
-    
+
     new_games = 0
 
     for game_id in range(target_games):
@@ -152,7 +151,6 @@ def run_experiment(
         save_result(result, str(results_path))
         results.append(result)
         new_games += 1
-    
+
     results.sort(key=lambda result: result.seed)
     return results
-

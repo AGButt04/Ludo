@@ -37,7 +37,7 @@ def validate_results(result: GameResult) -> None:
 
     if type(result.moves_played) is not int:
         raise TypeError("Moves played has to be an integer.")
-    
+
     if result.moves_played < 0:
         raise ValueError("Moves played cannot be negative.")
 
@@ -89,7 +89,7 @@ def validate_results(result: GameResult) -> None:
             raise TypeError("Winner ID's type must be an integer.")
         if not 0 <= result.winner_id < result.num_players:
             raise ValueError("Winner ID is outside the player range.")
-    
+
     if not result.truncated and result.moves_played == 0:
         raise ValueError("A completed win must include at least one move.")
 

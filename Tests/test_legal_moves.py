@@ -66,3 +66,19 @@ class LegalMoveChecks(unittest.TestCase):
         self.red[2].position = self.red[3].position = 57
         self.assertEqual(self.choices(4), {(0, 1)})
         self.assertEqual(self.choices(6), set())
+
+    def test_adjacent_friendly_pairs(self):
+        """Rules example: pair 3 cannot land on 4; pair 4 can move to 5."""
+        for piece, position in zip(self.red, [3, 3, 4, 4]):
+            piece.position = position
+        self.assertEqual(self.choices(2), {(0,), (1,), (2,), (3,), (2, 3)})
+        # Singles may cross their own pair; an odd roll cannot move a pair.
+        self.assertEqual(self.choices(3), {(0,), (1,), (2,), (3,)})
+
+    def test_release_onto_occupied_start(self):
+        """A friendly pair prevents a third piece; an enemy safe pair does not."""
+        self.red[0].position = self.red[1].position = 1
+        self.assertEqual(self.choices(6), {(0,), (1,), (0, 1)})
+        self.red[0].position = self.red[1].position = 0
+        self.green[0].position = self.green[1].position = 40  # Shared square 1.
+        self.assertEqual(self.choices(6), {(0,), (1,), (2,), (3,)})

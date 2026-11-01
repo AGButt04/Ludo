@@ -15,14 +15,14 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0, 
         raise TypeError("Max turns must be an integer.")
     if max_turns <= 0:
         raise ValueError("Max turns has to be positive.")
-        
+
     state = initial_state(num_players)
-    
+
     if type(starting_player_index) is not int:
         raise TypeError("Starting player index must be an integer.")
     if not 0 <= starting_player_index < len(state.players):
         raise ValueError("Starting player index must identify a participating seat.")
-    
+
     state.current_player_index = starting_player_index
     dice = Dice(seed)
     random_agents = {}
@@ -40,7 +40,7 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0, 
         forfeited_turns=0
     )
 
-    
+
     for player in state.players:
         r_agent = RandomAgent(seed + 1 + player.player_id)
         random_agents[player.player_id] = r_agent
@@ -75,49 +75,49 @@ def run_game(num_players=4, seed=0, max_turns=10000, starting_player_index = 0, 
 
             try:
                 moved = play_agent_roll(
-                    state, agent, rejections, 
+                    state, agent, rejections,
                     trace=trace, turn=turn + 1
                 )
-            
+
             except AgentRetryLimitError:
-                
+
                 game_result.invalid_choices += len(rejections)
                 game_result.forfeited_turns += 1
-                
+
                 before_forfeit = snapshot_state(state) if trace is not None else None
                 forfeit_turn(state)
-                
+
                 if trace is not None:
                     trace.append({"event": "forfeit", "turn": turn + 1,
                                   "before": before_forfeit, "after": snapshot_state(state)
                     })
                 break
-            
+
             game_result.invalid_choices += len(rejections)
 
-            if moved: 
+            if moved:
                 game_result.moves_played += 1
 
             if has_won(state, current_player.player_id):
                 game_result.winner_id = current_player.player_id
                 game_result.turns_played = turn + 1
                 game_result.truncated = False
-                
+
                 if trace is not None:
                     trace.append({"event": "end", "reason": "winner",
-                                  "result": asdict(game_result), 
+                                  "result": asdict(game_result),
                                   "state": snapshot_state(state)
                     })
-                
+
                 return game_result
-    
+
     game_result.winner_id = None
     game_result.turns_played = max_turns
     game_result.truncated = True
-    
+
     if trace is not None:
         trace.append({"event": "end", "reason": "turn_limit",
-                      "result": asdict(game_result), 
+                      "result": asdict(game_result),
                       "state": snapshot_state(state)
         })
 
@@ -137,15 +137,15 @@ def play_agent_roll(state, agent, rejections: list[str], trace=None, turn=None) 
             )
 
         return False
-    
+
     for attempt in range(3):
         move = agent.choose_move(deepcopy(state), deepcopy(moves))
 
         try:
             play_turn(state, move)
-        
+
         except InvalidMoveError as error:
-           
+
             rejections.append(str(error))
             if trace is not None:
                 trace.append({"event": "rejection", "turn": turn,
@@ -161,7 +161,7 @@ def play_agent_roll(state, agent, rejections: list[str], trace=None, turn=None) 
             )
 
         return True
-    
+
     raise AgentRetryLimitError("Three invalid choices for the current roll.")
 
 

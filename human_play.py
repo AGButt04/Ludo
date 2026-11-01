@@ -1,12 +1,11 @@
 from Game.models import GameState, Move, initial_state
 from Game.dice import Dice
-from Game.engine import roll_turn, play_turn
+from Game.engine import roll_turn, play_turn, forfeit_turn
 from Game.rules import legal_moves, has_won, move_destination
 from Game.constants import YARD, HOME_START, FINISHED
 from Agents.random_agent import RandomAgent
 from run_game import play_agent_roll
 from Game.errors import AgentRetryLimitError
-from Game.engine import forfeit_turn
 
 def position_label(position: int) -> str:
     if position == YARD:
@@ -59,7 +58,7 @@ def choose_human_move(moves: list[Move]) -> Move | None:
             choice = input("Choose a move number (q to quit): ").strip().lower()
         except EOFError:
             return None
-        
+
         if choice == "q":
             return None
 
@@ -68,10 +67,10 @@ def choose_human_move(moves: list[Move]) -> Move | None:
         except ValueError:
             print("That was not a valid input.")
             continue
-        
+
         if 1 <= number <= len(moves):
             return moves[number - 1]
-        
+
         print("Choose a number from the displayed moves.")
 
 def play_human_game() -> None:
@@ -116,7 +115,7 @@ def play_human_game() -> None:
                 if move is None:
                     print("Game ended by user.")
                     return
-                
+
                 play_turn(state, move)
 
             if moves:
@@ -128,4 +127,3 @@ def play_human_game() -> None:
 
 if __name__ == "__main__":
     play_human_game()
- 

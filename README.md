@@ -12,8 +12,9 @@ Investigate how training opponents and reward design affect four-player PPO agen
 - Seeded random agents and terminal play against three random opponents.
 - Batch runs, JSONL results, summaries, and resumable experiments without duplicate games.
 - Agent snapshots, invalid-choice recovery, and saved-result validation.
+- Optional saved gameplay traces and automated transition checks.
 
-Working gameplay is not a completed correctness audit. Pending: persistent human-interface tests, full-game tracing/review, broader automated checks, heuristic opponents, RL observations/actions/rewards, PPO, self-play, and research evaluation.
+Working engine v1: 74 automated tests, seeded-game checks, a bounded rule-coverage review, and selected trace-event walkthroughs. Full manual human-play review and persistent interface tests remain pending; verification is not exhaustive. Heuristic opponents, the RL interface, PPO/self-play, and research experiments are not implemented.
 
 ## Run
 
@@ -22,9 +23,8 @@ Python 3.10+; no third-party packages currently required. From `Environment and 
 ```bash
 python3 human_play.py                         # Play as red; q quits at your prompt
 python3 run_game.py                           # One random-agent game
-python3 Check.py                              # Resume demo using temporary files
-python3 -m unittest discover -s Tests -q      # Tests/ suite
-python3 -m unittest Check -q                  # Additional foundation checks
+python3 Check.py                              # Short capture demo
+python3 -m unittest discover -s Tests -q      # All 74 tests, including foundations
 ```
 
 ## Read next
@@ -36,3 +36,7 @@ python3 -m unittest Check -q                  # Additional foundation checks
 - [Research_Progress.md](Research_Progress.md): literature and candidate questions.
 
 Development proceeds in small, explained, and tested steps.
+
+## Source versus output
+
+`Game/`, `Agents/`, and `Experiments/` contain implementation code. `Tests/` contains verification code. `Results/` contains saved outputs, including the sample audit trace; these are not needed to import the engine. Existing records are retained, and older schemas are not silently migrated.

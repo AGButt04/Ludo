@@ -3,3 +3,7 @@
 
 # Python cache folders
 __pycache__/
+
+# Local Python environments and compiled bytecode
+.venv/
+*.py[cod]

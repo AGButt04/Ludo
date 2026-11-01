@@ -8,7 +8,7 @@ The provisional research question concerns how training opponents (fixed heurist
 ## Working style
 - Explain the purpose, syntax, and one concrete Ludo example before new implementation. Keep explanations brief and beginner-friendly.
 - The student normally writes the code. Review their work, fix errors in the requested portion, run relevant checks, and explain corrections. Do not implement future tasks unless asked.
-- Group new tasks into 2–3 connected methods. When asked for the next task, explain it and add concise steps to `Infrastructure_Progress.md`.
+- Group new tasks into small connected sections. Explain new assignments in chat; the student requested no automatic task logging. Update progress documentation when explicitly requested.
 - Mark tasks complete only after checking the code and tests. After roughly 8–10 additional completed tasks, condense their descriptions into short progress rows.
 - Preserve the student's edits. Resolve routine coding details independently; ask about unresolved game rules before implementing behavior that depends on them.
 
@@ -27,6 +27,10 @@ The provisional research question concerns how training opponents (fixed heurist
 ## Checks
 Run commands from this directory:
 - `python3 Check.py` — only a short, readable demonstration of the current task. Do not make this run the full suite or print lengthy output.
-- `python3 -m unittest Check Tests.test_rules_validation Tests.test_legal_moves -q` — existing regression checks. Include additional test modules as they are added.
+- `python3 -m unittest discover -s Tests -q` — all regression checks, including foundations moved from `Check.py`. Do not use `python3 -m unittest Check` as the full suite.
 
 Keep regression tests separate from the short demonstration. Test relevant edge cases and confirm failed actions leave state unchanged. Report results concisely; distinguish tested components from the unfinished engine.
+
+## Current handoff
+
+Working engine v1 has persistent traces, selected-event review, and a bounded rule-coverage review. Full student manual play review and persistent interface tests remain pending; next development is a simple heuristic opponent, then RL. Preserve the student's understanding: walk through new integrations, avoid one-line task churn, and do not describe tested behavior as exhaustive correctness.

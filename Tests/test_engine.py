@@ -25,6 +25,22 @@ class EngineChecks(unittest.TestCase):
         self.assertEqual(self.state.current_player_index, 0)
         self.assertEqual(self.state.dice_roll, 6)
 
+    def test_private_home_paths_do_not_interact(self):
+        """Equal relative home positions belong to different private paths."""
+        self.red[0].position = 52
+        self.green[0].position = self.green[1].position = 54
+        expected = deepcopy(self.state)
+        expected.players[0].pieces[0].position = 54
+        apply_move(self.state, Move(0, (0,)), 2)
+        self.assertEqual(self.state, expected)
+
+    def test_release_shares_safe_start_without_capture(self):
+        self.green[0].position = self.green[1].position = 40  # Shared square 1.
+        expected = deepcopy(self.state)
+        expected.players[0].pieces[0].position = 1
+        apply_move(self.state, Move(0, (0,)), 6)
+        self.assertEqual(self.state, expected)
+
     def test_single_and_pair_capture(self):
         """Capture uses shared squares; reversed pair IDs still work."""
         self.red[0].position = 2

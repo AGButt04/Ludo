@@ -1,6 +1,6 @@
 # Ludo RL — Research Progress
 
-Updated: October 2, 2026
+Engineering status updated: November 1, 2026. Literature summaries below are retained from earlier review; this cleanup did not reverify paper claims.
 
 ## Project direction
 
@@ -92,9 +92,10 @@ Keep the PPO implementation, network architecture, board representation, rules, 
 
 ## Current progress and next steps
 
-- **Completed:** Initial review of four Ludo papers and candidate-question refinement. Infrastructure now includes complete random-agent games, human terminal play, resumable experiments, result validation, and agent-state isolation. Latest local checks: 54 main tests and nine foundation checks pass; this does not establish full gameplay correctness.
-- **Not yet completed:** Broader novelty search, complete validated game engine, or training experiments.
-- **Next engineering step:** Add optional transition snapshots/logs and audit gameplay against hand-calculated rule cases. Persistent human-interface tests remain pending; heuristic agents follow the audit.
-- **Advisor direction:** The minimum deliverable is a working research platform. Build and validate infrastructure during Fall; use Spring for experiments and research findings. Novelty, baselines, behavior measurements, and the two-player pilot remain discussion topics.
+- **Built:** Working two-/four-player simulator, random agents, human terminal play, resumable experiments, validated summaries, agent-state isolation, and persistent gameplay traces.
+- **Verification:** 74 automated tests (including nine foundation checks). Earlier checks inspected 16 seeded games for selected transition properties; a bounded rule-coverage review added missing cases. Four meaningful events from one recorded game were reviewed together. These are engineering checks, not learned-agent results or exhaustive verification.
+- **Still pending:** Student's full human-play review, persistent interface tests, heuristic opponents, RL interface, PPO/self-play, and controlled research experiments. Broader novelty verification remains open.
+- **Next engineering step:** Define a simple heuristic opponent; use the existing engine and agent interface. Fix demonstrated bugs from manual review rather than expand audit infrastructure indefinitely.
+- **Advisor direction:** The minimum deliverable is the working research platform. Fall focuses on infrastructure; Spring is intended for experiments. The question, baselines, measurements, and optional two-player pilot still need advisor feedback.
 
-**Infrastructure targets (tentative):** October—complete random-agent games; November—heuristic agents and logs; December—verification, fixes, and demonstration before January 2027.
+**Tentative next milestones:** November—manual review and heuristic baseline; December—RL integration/verification as time permits. These are plans, not completed work. No claim of a new algorithm or empirical RL finding is made yet.
