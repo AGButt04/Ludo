@@ -20,10 +20,12 @@ def position_label(position: int) -> str:
 def display_turn(state: GameState, moves: list[Move]) -> None:
     print("\n" + "─" * 52)
     print(f"{'Pieces':<16}" + "".join(f'{i:<9}' for i in range(4)))
-    for player in state.players:
+   
+   for player in state.players:
         name = player.color.name + (" (you)" if player.player_id == 0 else "")
         positions = "".join(f'{position_label(p.position):<9}' for p in player.pieces)
         print(f"{name:<16}{positions}")
+    
     print("Positions show each piece's relative progress.")
     remaining = ", ".join(map(str, state.remaining_rolls)) or "none"
     print(f"\nYour roll: {state.dice_roll} | Remaining: {remaining}\n")
@@ -35,12 +37,14 @@ def display_turn(state: GameState, moves: list[Move]) -> None:
         selection = " + ".join(map(str, move.piece_ids))
         label = "Pair" if len(move.piece_ids) == 2 else "Piece"
         print(f"  {number}. {label} {selection}: {position_label(piece.position)} → {position_label(destination)}")
+    
     print("  q. Quit\n")
 
 
 def display_changes(state: GameState, before: dict, name: str, roll: int) -> None:
     """Describe actual movement and captures after an action succeeds."""
     changes = []
+    
     for player in state.players:
         for piece in player.pieces:
             old = before[(player.player_id, piece.piece_id)]
@@ -50,7 +54,8 @@ def display_changes(state: GameState, before: dict, name: str, roll: int) -> Non
                 changes.append(f"captured {player.color.name} piece {piece.piece_id}")
             else:
                 changes.append(f"piece {piece.piece_id}: {position_label(old)} → {position_label(piece.position)}")
-    print(f"{name} rolled {roll}: " + "; ".join(changes))
+    
+     print(f"{name} rolled {roll}: " + "; ".join(changes))
 
 def choose_human_move(moves: list[Move]) -> Move | None:
     while True:

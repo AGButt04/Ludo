@@ -4,6 +4,11 @@ Updated November 1, 2026. Working engine v1 and experiment infrastructure; no RL
 
 ## Current status
 
+- November 13 design handoff: [Personal_Agent_Design.md](Personal_Agent_Design.md)
+  records Abdul's proposed heuristic, essential definitions, and open priority decisions.
+  Implementation details are intentionally left for discussion. This is a design
+  milestone only; no personal-agent implementation or new test results are claimed.
+
 - Two-/four-player random games and four-player human terminal play work under [Rules.md](Rules.md).
 - Seeded batches, summaries, config checks, resuming, result validation, and agent-state isolation are implemented.
 - Optional persistent traces record starts, rolls/cancellations, moves/passes, rejections, forfeitures, and endings. Snapshots contain relative positions; shared squares and captures can be derived from them.
@@ -74,6 +79,29 @@ Cleanup verification passed: all 74 tests, the capture demo, a random-game run, 
 
 Finish the planned manual review and address demonstrated bugs. Next development discussion: define one simple heuristic agent and how to select opponents in the runner. After that: RL observations/actions/masks, separate rewards, PPO, then controlled experiments. No new RL/network claims yet.
 
+## Task 33 — Personal agent: identify immediate wins
+
+**Status:** Complete for these two helpers. `simulate_move()` and `winning_moves()` verified for single/pair wins, non-winning finishes, empty choices, and unchanged input state/choices. All 76 tests pass. Move selection and runner integration are not implemented yet. **File:** `Agents/AGB.py`.
+**Purpose:** Implement Rule 1 of `Personal_Agent_Design.md`: recognize a move that wins the whole game, without changing the real board.
+
+1. Create `PersonalAgent`. Add `simulate_move(self, state, move) -> GameState`: deep-copy the state, call `play_turn(copy, move)`, and return the copy. Inputs are a state with a pending roll and a legal move.
+2. Add `winning_moves(self, state, moves) -> list[Move]`: remember the current player's ID, simulate each supplied legal move on a fresh copy, and collect moves for which `has_won(copy, player_id)` is true. Return `[]` if none wins.
+
+**Example:** Positions `[57, 57, 57, 56]`, roll 1: moving piece 3 wins. Finishing one piece while others remain outside does not count as winning.
+**Checks after review:** Single-piece win, pair finish that wins, non-winning finish, empty choices, and original state/rolls unchanged. No runner integration or fallback priorities yet; known-roll planning comes later. Build the full design gradually and document conflicts when resolved.
+
+## Task 34 — Personal agent: detect single-roll capture threats
+
+**Status:** Next. **File:** `Agents/AGB.py`.
+**Purpose:** Support Rule 2 by identifying possible captures, without choosing a defensive move yet.
+1. Add `capture_threats(self, state, player_id, piece_id) -> list[tuple[int, int]]`. Resolve the target by IDs using existing lookup helpers. Yard, private-home, finished, and safe-square pieces return `[]`.
+2. On copies, consider each other player acting with each roll 1–6. Set their current-player index, replace the pending roll, clear remaining rolls, and generate legal choices. Simulate choices; if the target is captured, record `(opponent_id, roll)` once for that roll.
+3. Test singles/pairs, unsafe blockades, safe/private squares, and unchanged inputs. Return no threats for an ended game. This is a hypothetical single-roll test on the supplied board, not a forecast of intervening moves, extra rolls, or opponent preferences. Known-roll plans will evaluate threats after our own sequence.
+
+**Example:** Red at relative 16 and Green at relative 1: Green can capture Red with a 2, so include `(1, 2)` if that move is legal. This is possible capture, not a probability estimate.
+
 ## Workflow
 
 Explain → student implements → review/fix → test. Keep chunks understandable, preserve the student's code ownership, and avoid repeating demo edits or adding speculative infrastructure. The user authorized this cleanup; useful tests and existing results are retained.
+
+November 15 preference: resume concise task instructions in this file alongside explanations in chat. Understanding takes priority over presentation deadlines.
