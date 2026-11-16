@@ -7,6 +7,7 @@ from Game.rules import to_absolute, is_safe_square, legal_moves
 
 
 class PersonalAgent:
+    # Rule-1:
     def simulate_move(self, state: GameState, move: Move) -> GameState:
         state_copy = deepcopy(state)
         play_turn(state_copy, move)
@@ -25,6 +26,7 @@ class PersonalAgent:
         
         return win_moves
     
+    # Rule-2:
     def capture_threats(self, state, player_id, piece_id) -> list[tuple[int, int]]:
         player, pieces = get_move_pieces(
             state, Move(player_id, (piece_id, ))
@@ -86,8 +88,11 @@ class PersonalAgent:
         threatened.sort(key=lambda piece: piece.position, reverse=True)
         return threatened
 
-    def protective_moves(self, state, moves):
+    def protective_moves(self, state, moves, minimum_position=TRACK_START):
         for piece in self.threatened_pieces(state):
+            if piece.position < minimum_position:
+                continue
+
             saving_moves = []
 
             for move in moves:
@@ -105,3 +110,34 @@ class PersonalAgent:
                 return saving_moves
 
         return []
+    
+    # Rule-3:
+    def deployment_moves(self, state, moves):
+        deploying = []
+
+        for move in moves:
+            _, pieces = get_move_pieces(state, move)
+
+            # Legal deployment moves select one piece in the yard.
+            if len(pieces) == 1 and pieces[0].position == YARD:
+                deploying.append(move)
+        
+        return deploying
+    
+    def deployment_or_protection(self, state, moves):
+        dep_moves = self.deployment_moves(state, moves)
+
+        if dep_moves:
+            protect_moves = self.protective_moves(state, moves, 27)
+            
+            if protect_moves:
+                # Deployment available and advanced piece savable
+                return protect_moves
+            
+            # Deployment available and advanced piece not savable
+            return dep_moves
+
+        # Deployment unavailable
+        return self.protective_moves(state, moves)
+
+

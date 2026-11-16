@@ -117,6 +117,23 @@ Finish the planned manual review and address demonstrated bugs. Next development
 3. Return the collected moves for the first savable piece; otherwise continue to the next piece. Return `[]` if none can be saved. A move may save a piece indirectly, such as capturing its attacker; do not restrict to moves selecting that piece.
 **Checks:** Advanced savable piece preferred; unsavable advanced piece skipped; no protection returns empty; indirect protection; state unchanged. Return all qualifying moves without inventing a tie-break. Full stored-roll planning remains Rule 9; this helper alone does not complete the full agent.
 
+## Task 37 — Personal agent: identify deployment moves
+
+**Status:** Complete. Legal releases, non-six, full starting square, no yard pieces, empty choices, and unchanged inputs verified. All 81 tests pass. **File:** `Agents/AGB.py`.
+**Purpose:** Support Rule 3 by identifying legal choices that release a piece from the yard.
+1. Add `deployment_moves(self, state, moves)`. Inputs are the current state and its supplied legal moves.
+2. For each move, use `get_move_pieces(state, move)` to find its selected pieces. If it selects one piece currently at `YARD`, collect the move.
+3. Return the collected moves. No simulation or repeated dice validation is needed because the choices are already legal.
+**Checks:** Six with yard pieces, non-six, blocked/full starting square, no yard pieces, empty choices, unchanged inputs. Choosing deployment versus protection and the exact progress threshold remain separate decisions.
+
+## Task 38 — Personal agent: deployment versus protection
+
+**Status:** Complete for this immediate-move conflict. Threshold filtering, deployment preference below halfway, advanced protection, unsavable advanced piece, unavailable deployment, empty choices, and unchanged inputs verified. All 83 tests pass. Rule 3's urgency exception and other rule conflicts remain pending. **File:** `Agents/AGB.py`.
+**Purpose:** Apply the agreed halfway boundary to this specific Rule 3 conflict.
+1. Give `protective_moves` an optional `minimum_position=TRACK_START`. Skip threatened pieces below that position before simulating saving moves. Existing calls keep their behavior.
+2. Add `deployment_or_protection(self, state, moves)`. Find deployment moves. If available, return protective moves for positions 27+ when any exist; otherwise return deployment moves. If deployment is unavailable, return ordinary protective moves.
+**Checks:** Threshold filtering, unsavable advanced piece, deployment unavailable, neither option, unchanged inputs, existing Rule 2 tests. Boundary agreed November 16: `(position - 1) / 51`, so 26 is below halfway and 27 above. Immediate wins remain higher priority in later integration; capture conflicts, urgency, ties, and full-turn planning remain separate.
+
 ## Workflow
 
 Explain → student implements → review/fix → test. Keep chunks understandable, preserve the student's code ownership, and avoid repeating demo edits or adding speculative infrastructure. The user authorized this cleanup; useful tests and existing results are retained.

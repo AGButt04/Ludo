@@ -1,6 +1,6 @@
 # Abdul's rule-based Ludo agent
 
-Updated November 13, 2026. Proposed playing preferences, not implemented code.
+Updated November 16, 2026. Playing preferences; implementation status is tracked in Infrastructure_Progress.md.
 Goal: imitate Abdul's defensive, progress-focused style in a winner-only game.
 Strength must be tested; these are personal heuristics, not proven optimal rules.
 Use Rules.md for game mechanics. Discuss implementation separately, step by step.
@@ -9,6 +9,9 @@ Use Rules.md for game mechanics. Discuss implementation separately, step by step
 
 - **Progress:** Distance traveled on the shared path toward private-lane entry.
   Above 50% is well progressed; above 75% is very well progressed.
+  Agreed November 16: measure `(position - 1) / (52 - 1)` from release to
+  private-lane entry. Positions 26 and below are below halfway; 27 and above
+  are above halfway. No integer position is exactly halfway.
   Pieces inside the private lane cannot be captured.
 - **Threat (initial model):** An opponent could legally capture the piece with
   one roll of 1–6. Check actual legality, not just distance. Extra-roll threats
@@ -77,7 +80,6 @@ comes first; the other preferences depend on context and the exceptions below.
 
 Do not silently invent priorities or weights for these cases:
 
-- Exact progress formula and treatment of exactly 50%.
 - Valuable capture versus deployment when both are available.
 - What qualifies as urgent intervention against a near-winner.
 - Partial safety improvement: fewer threats, but not complete safety.
