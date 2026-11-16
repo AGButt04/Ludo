@@ -71,5 +71,37 @@ class PersonalAgent:
 
         return threats
 
+    def threatened_pieces(self, state):
+        player = state.current_player()
+        threatened = []
 
+        for piece in player.pieces:
+            threats =  self.capture_threats(
+                state, player.player_id, piece.piece_id
+            )
 
+            if threats:
+                threatened.append(piece)
+        
+        threatened.sort(key=lambda piece: piece.position, reverse=True)
+        return threatened
+
+    def protective_moves(self, state, moves):
+        for piece in self.threatened_pieces(state):
+            saving_moves = []
+
+            for move in moves:
+                # Simulate this move.
+                sim_state = self.simulate_move(state, move)
+
+                # Check this piece's threats in the resulting state.
+                threats = self.capture_threats(sim_state, piece.player_id, piece.piece_id)
+
+                # If none remain, append move to saving_moves.
+                if not threats:
+                    saving_moves.append(move)
+
+            if saving_moves:
+                return saving_moves
+
+        return []

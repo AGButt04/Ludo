@@ -92,13 +92,30 @@ Finish the planned manual review and address demonstrated bugs. Next development
 
 ## Task 34 — Personal agent: detect single-roll capture threats
 
-**Status:** Next. **File:** `Agents/AGB.py`.
+**Status:** Complete. Verified single/pair captures, splitting a pair, later opponents, blocked routes, protected positions, ended games, and unchanged inputs. All 78 tests pass. **File:** `Agents/AGB.py`.
 **Purpose:** Support Rule 2 by identifying possible captures, without choosing a defensive move yet.
 1. Add `capture_threats(self, state, player_id, piece_id) -> list[tuple[int, int]]`. Resolve the target by IDs using existing lookup helpers. Yard, private-home, finished, and safe-square pieces return `[]`.
 2. On copies, consider each other player acting with each roll 1–6. Set their current-player index, replace the pending roll, clear remaining rolls, and generate legal choices. Simulate choices; if the target is captured, record `(opponent_id, roll)` once for that roll.
 3. Test singles/pairs, unsafe blockades, safe/private squares, and unchanged inputs. Return no threats for an ended game. This is a hypothetical single-roll test on the supplied board, not a forecast of intervening moves, extra rolls, or opponent preferences. Known-roll plans will evaluate threats after our own sequence.
 
 **Example:** Red at relative 16 and Green at relative 1: Green can capture Red with a 2, so include `(1, 2)` if that move is legal. This is possible capture, not a probability estimate.
+
+## Task 35 — Personal agent: list threatened pieces
+
+**Status:** Complete. Ordering, current-player ownership, empty results, and unchanged state verified; all 79 tests pass. **File:** `Agents/AGB.py`.
+**Purpose:** Give Rule 2 the current player's threatened pieces, most advanced first; defensive move selection follows later.
+1. Add `threatened_pieces(self, state)`: loop through `state.current_player().pieces` and collect pieces whose `capture_threats(state, player.player_id, piece.piece_id)` is nonempty.
+2. Sort the collected list by `piece.position`, descending, and return it. Do not change positions or sort the player's original list.
+**Checks:** Empty result when safe; multiple threatened pieces ordered by progress; only current player's pieces; original state unchanged. Equal progress does not yet decide which defensive move to choose.
+
+## Task 36 — Personal agent: find protective moves
+
+**Status:** Complete for immediate-move protection. Verified advanced-piece preference, fallback to a savable piece, indirect protection, no-saving/no-threat cases, and unchanged inputs. All 80 tests pass. Full known-roll planning and agent move selection remain pending. **File:** `Agents/AGB.py`.
+**Purpose:** Rule 2's immediate-move helper: return legal choices that remove all threats to the most advanced savable piece.
+1. Add `protective_moves(self, state, moves)`. Visit `threatened_pieces(state)` in its existing order.
+2. For each threatened piece, simulate every supplied legal move independently. Collect moves for which that piece has no capture threats afterward (look it up using its original IDs).
+3. Return the collected moves for the first savable piece; otherwise continue to the next piece. Return `[]` if none can be saved. A move may save a piece indirectly, such as capturing its attacker; do not restrict to moves selecting that piece.
+**Checks:** Advanced savable piece preferred; unsavable advanced piece skipped; no protection returns empty; indirect protection; state unchanged. Return all qualifying moves without inventing a tie-break. Full stored-roll planning remains Rule 9; this helper alone does not complete the full agent.
 
 ## Workflow
 
