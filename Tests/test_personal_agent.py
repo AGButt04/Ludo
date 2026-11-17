@@ -8,6 +8,119 @@ from Game.rules import legal_moves
 
 
 class PersonalAgentChecks(unittest.TestCase):
+    def test_capture_progress_ranking(self):
+        cases = (
+            ("advanced single", [(0, 0, 12), (0, 1, 20), (1, 0, 3), (2, 0, 50)], 4, [(1,)]),
+            ("unsafe advanced single", [(0, 0, 12), (0, 1, 20), (1, 0, 3), (2, 0, 50), (3, 0, 35)], 4, [(0,)]),
+            ("equal captures retain both choices", [(0, 0, 12), (0, 1, 12), (1, 0, 3)], 4, [(0,), (1,)]),
+            ("advanced pair once", [(0, 0, 14), (0, 1, 14), (0, 2, 30), (0, 3, 30), (1, 0, 3), (1, 1, 3), (2, 0, 6), (2, 1, 6)], 4, [(2, 3)]),
+        )
+        for label, placements, roll, expected in cases:
+            with self.subTest(case=label):
+                state = initial_state(4)
+                state.dice_roll = roll
+                for owner, piece, position in placements:
+                    state.players[owner].pieces[piece].position = position
+                moves = legal_moves(state, roll)
+                before, original_moves = deepcopy(state), deepcopy(moves)
+                actual = PersonalAgent().preferred_capture_moves(state, moves)
+                self.assertEqual([move.piece_ids for move in actual], expected)
+                self.assertEqual(state, before)
+                self.assertEqual(moves, original_moves)
+
+    def test_preferred_capture_moves(self):
+        for exposed_pair in (False, True):
+            with self.subTest(exposed_pair=exposed_pair):
+                state = initial_state(4)
+                state.dice_roll = 4
+                for piece_id in (0, 1):
+                    state.players[0].pieces[piece_id].position = 14
+                    state.players[1].pieces[piece_id].position = 3
+                    if exposed_pair:
+                        # Blue pair at shared 14 can recapture Red's pair at 16.
+                        state.players[3].pieces[piece_id].position = 27
+                state.players[0].pieces[2].position = 20
+                state.players[2].pieces[0].position = 50  # Shared square 24.
+                pair, single = Move(0, (0, 1)), Move(0, (2,))
+                moves = legal_moves(state, 4)
+                self.assertIn(pair, moves)
+                self.assertIn(single, moves)
+                before, original_moves = deepcopy(state), deepcopy(moves)
+                agent = PersonalAgent()
+                self.assertEqual(agent.preferred_capture_moves(state, moves), [single] if exposed_pair else [pair])
+                self.assertEqual(agent.preferred_capture_moves(state, [single]), [single])
+                self.assertEqual(agent.preferred_capture_moves(state, []), [])
+                self.assertEqual(state, before)
+                self.assertEqual(moves, original_moves)
+        state = initial_state(4)
+        state.dice_roll = 6
+        self.assertEqual(PersonalAgent().preferred_capture_moves(state, legal_moves(state, 6)), [])
+
+    def test_safe_capture_moves(self):
+        for pair in (False, True):
+            for exposed in (False, True):
+                with self.subTest(pair=pair, exposed=exposed):
+                    state = initial_state(4)
+                    state.dice_roll = 4 if pair else 2
+                    selected = (0, 1) if pair else (0,)
+                    for piece_id in selected:
+                        state.players[0].pieces[piece_id].position = 14
+                        state.players[1].pieces[piece_id].position = 3
+                        if exposed:
+                            # Yellow starts on shared safe square 14 and can
+                            # recapture Red on unsafe square 16 next turn.
+                            state.players[2].pieces[piece_id].position = 40
+                    move = Move(0, selected)
+                    self.assertIn(move, legal_moves(state, state.dice_roll))
+                    before = deepcopy(state)
+                    actual = PersonalAgent().safe_capture_moves(state, [move])
+                    self.assertEqual(actual, [] if exposed else [move])
+                    self.assertEqual(state, before)
+        state = initial_state(4)
+        state.dice_roll = 6
+        self.assertEqual(PersonalAgent().safe_capture_moves(state, legal_moves(state, 6)), [])
+        self.assertEqual(PersonalAgent().safe_capture_moves(state, []), [])
+
+    def test_win_preventing_moves(self):
+        for label, green_position, blue_threat, expected in (
+            ("capture prevents win", 51, False, [(0,)]),
+            ("private lane cannot be captured", 56, False, []),
+            ("another threat remains", 51, True, []),
+            ("no emergency", 40, False, []),
+        ):
+            with self.subTest(case=label):
+                state = initial_state(4)
+                state.dice_roll = 2
+                state.players[0].pieces[0].position = 10
+                state.players[0].pieces[1].position = 20
+                # Green relative 51 is shared square 12, capturable by Red 10->12.
+                for piece, position in zip(state.players[1].pieces, [57, 57, 57, green_position]):
+                    piece.position = position
+                if blue_threat:
+                    for piece, position in zip(state.players[3].pieces, [57, 57, 57, 56]):
+                        piece.position = position
+                moves = legal_moves(state, 2)
+                before, original_moves = deepcopy(state), deepcopy(moves)
+                agent = PersonalAgent()
+                actual = agent.win_preventing_moves(state, moves)
+                self.assertEqual([m.piece_ids for m in actual], expected)
+                self.assertEqual(agent.win_preventing_moves(state, []), [])
+                self.assertEqual(state, before)
+                self.assertEqual(moves, original_moves)
+
+    def test_winning_threats_preserve_perspective_after_turn_advances(self):
+        state = initial_state(4)
+        state.dice_roll = 2
+        state.players[0].pieces[0].position = 20
+        for piece, position in zip(state.players[1].pieces, [57, 57, 57, 51]):
+            piece.position = position
+        agent = PersonalAgent()
+        after = agent.simulate_move(state, Move(0, (0,)))
+        self.assertEqual(after.current_player().player_id, 1)
+        before = deepcopy(after)
+        self.assertEqual(agent.immediate_winning_threats(after, player_id=0), [(1, 6)])
+        self.assertEqual(after, before)
+
     def test_immediate_winning_threats(self):
         cases = (
             ("single", {1: [57, 57, 57, 56]}, [(1, 1)]),

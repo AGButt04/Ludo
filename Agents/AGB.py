@@ -27,7 +27,7 @@ class PersonalAgent:
         return win_moves
     
     # Emergency priority: Prevent an immediate opponent win.
-    def immediate_winning_threats(self, state):
+    def immediate_winning_threats(self, state, player_id=None):
         winning_threats = []
 
         if player_id is None:
@@ -58,6 +58,22 @@ class PersonalAgent:
                         break
         
         return winning_threats
+    
+    def win_preventing_moves(self, state, moves):
+        player_id = state.current_player().player_id
+        preventing = []
+
+        if not self.immediate_winning_threats(state, player_id):
+            return preventing
+        
+        for move in moves:
+            result_state = self.simulate_move(state, move)
+            threats = self.immediate_winning_threats(result_state, player_id)
+
+            if not threats:
+                preventing.append(move)
+        
+        return preventing
     
     # Rule-2:
     def capture_threats(self, state, player_id, piece_id) -> list[tuple[int, int]]:
@@ -202,3 +218,51 @@ class PersonalAgent:
                 capturing.append(move)
         
         return capturing
+    
+    def safe_capture_moves(self, state, moves):
+        safe_moves = []
+
+        for move in self.capture_moves(state, moves):
+            after = self.simulate_move(state, move)
+            is_safe = True
+
+            for piece_id in move.piece_ids:
+                threats = self.capture_threats(after, move.player_id, piece_id)
+
+                if threats:
+                    is_safe = False
+                    break
+
+            if is_safe:
+                safe_moves.append(move)
+        
+        return safe_moves
+    
+    def preferred_capture_moves(self, state, moves):
+        safe_moves = self.safe_capture_moves(state, moves)
+        pair_captures = []
+
+        for move in safe_moves:
+            captured_pieces = self.captured_pieces(state, move)
+
+            if len(captured_pieces) == 2:
+                pair_captures.append(move)
+
+        candidates = pair_captures if pair_captures else safe_moves
+        best_moves = []
+        best_progress = -1
+
+        for move in candidates:
+            # Get the captured pieces and read their original position.
+            captured_pieces = self.captured_pieces(state, move)
+            progress = captured_pieces[0].position
+
+            # If progress exceeds best_progress, replace best_moves with [move].
+            if progress > best_progress:
+                best_progress = progress
+                best_moves = [move]     
+            # If progress equals best_progress, append move.
+            elif progress == best_progress:
+                best_moves.append(move)
+
+        return best_moves

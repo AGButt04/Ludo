@@ -54,6 +54,12 @@ How to choose between partial interventions against multiple threats remains ope
    With equally safe capture choices, prefer a pair over a single, even a more
    advanced single: both captured pieces must redeploy. Preventing an immediate
    opponent win takes precedence over capturing a different opponent's pair.
+   A safe single capture beats an exposed pair capture. Here a safe capture
+   means none of our moved pieces has a single-roll capture threat afterward;
+   this does not certify safety for all our other pieces or across a full turn.
+   Within safe pair captures, or safe singles when no safe pair capture exists,
+   prefer the opponent's highest relative position. Keep tied choices for later
+   tie-breaking. Unsafe advanced captures are excluded before ranking progress.
 
 5. **Secure private-lane entry.** Prefer entry over ordinary safe advancement or
    grouping, unless protection or a valuable capture takes priority. Do not keep

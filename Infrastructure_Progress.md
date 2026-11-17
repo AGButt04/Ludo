@@ -146,6 +146,22 @@ Finish the planned manual review and address demonstrated bugs. Next development
 
 **Status:** Complete for detection. `immediate_winning_threats(state)` reports opponent/roll pairs with a legal one-move win, excluding the current player. Single/pair finishes, multiple opponents, non-winning states, ended games, and unchanged inputs verified. All 86 tests pass. Choosing preventive moves remains pending; comparisons after simulation must retain the original agent's perspective when the turn advances.
 
+## Task 42 — Personal agent: prevent immediate winning threats
+
+**Status:** Complete for removing all single-roll winning threats. `win_preventing_moves` simulates legal choices and checks opponents from the original player's perspective using the optional `player_id` argument. Capture prevention, unpreventable private-lane threats, multiple threats, no emergency, empty choices, turn advancement, and unchanged inputs verified. All 88 tests pass. Partial intervention and final choice integration remain pending; an empty list does not mean the game is already lost.
+
+## Task 43 — Personal agent: identify safe captures
+
+**Status:** Complete. `safe_capture_moves` keeps captures only when every moved piece is unthreatened afterward under the single-roll model. Safe/exposed single and pair captures, no duplicate pair entry, noncapturing/empty choices, and unchanged state verified. All 89 tests pass. Pair preference within safe captures remains next.
+
+## Task 44 — Personal agent: prefer safe pair captures
+
+**Status:** Complete. `preferred_capture_moves` returns safe pair captures when available, otherwise safe single captures. Safe pair versus advanced single, exposed pair versus safe single, empty/no-capture choices, and unchanged inputs verified. All 90 tests pass. Comparing captures against other strategic options and ranking captures within the same category remain unresolved.
+
+## Task 45 — Personal agent: rank safe captures by opponent progress
+
+**Status:** Complete. Within the preferred capture category (safe pairs before safe singles), `preferred_capture_moves` keeps moves capturing the most advanced opponents, preserving ties. Advanced singles/pairs, unsafe advanced capture fallback, no duplicate pair entries, and unchanged inputs verified. All 91 tests pass. Cross-rule priorities and final move selection remain pending.
+
 ## Workflow
 
 Explain → student implements → review/fix → test. Keep chunks understandable, preserve the student's code ownership, and avoid repeating demo edits or adding speculative infrastructure. The user authorized this cleanup; useful tests and existing results are retained.
