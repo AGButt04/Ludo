@@ -8,6 +8,59 @@ from Game.rules import legal_moves
 
 
 class PersonalAgentChecks(unittest.TestCase):
+    def test_immediate_winning_threats(self):
+        cases = (
+            ("single", {1: [57, 57, 57, 56]}, [(1, 1)]),
+            ("pair", {2: [57, 57, 55, 55]}, [(2, 4)]),
+            ("multiple opponents", {1: [57, 57, 57, 51], 3: [57, 57, 54, 54]}, [(1, 6), (3, 6)]),
+            ("exclude current player", {0: [57, 57, 57, 56]}, []),
+            ("two separate unfinished pieces", {1: [57, 57, 55, 56]}, []),
+            ("game ended", {1: [57, 57, 57, 56], 2: [57, 57, 57, 57]}, []),
+        )
+        for label, placements, expected in cases:
+            with self.subTest(case=label):
+                state = initial_state(4)
+                state.dice_roll, state.remaining_rolls = 3, [2]
+                for owner, positions in placements.items():
+                    for piece, position in zip(state.players[owner].pieces, positions):
+                        piece.position = position
+                before = deepcopy(state)
+                self.assertEqual(PersonalAgent().immediate_winning_threats(state), expected)
+                self.assertEqual(state, before)
+
+    def test_capture_moves(self):
+        state = initial_state(4)
+        state.dice_roll = 2
+        state.players[0].pieces[0].position = 14
+        state.players[0].pieces[1].position = 20
+        state.players[1].pieces[0].position = 3
+        moves = legal_moves(state, 2)
+        before, original_moves = deepcopy(state), deepcopy(moves)
+        agent = PersonalAgent()
+        self.assertEqual(agent.capture_moves(state, moves), [Move(0, (0,))])
+        self.assertEqual(agent.capture_moves(state, [Move(0, (1,))]), [])
+        self.assertEqual(agent.capture_moves(state, []), [])
+        self.assertEqual(state, before)
+        self.assertEqual(moves, original_moves)
+
+    def test_captured_pieces(self):
+        cases = (
+            ("single", [(0, 0, 14), (1, 0, 3)], 2, (0,), [(1, 0, 3)]),
+            ("pair", [(0, 0, 14), (0, 1, 14), (1, 0, 3), (1, 1, 3)], 4, (0, 1), [(1, 0, 3), (1, 1, 3)]),
+            ("safe square", [(0, 0, 20), (1, 0, 9)], 2, (0,), []),
+            ("yard pieces are not captures", [], 6, (0,), []),
+        )
+        for label, placements, roll, selected, expected in cases:
+            with self.subTest(case=label):
+                state = initial_state(4)
+                state.dice_roll = roll
+                for owner, piece, position in placements:
+                    state.players[owner].pieces[piece].position = position
+                before = deepcopy(state)
+                captured = PersonalAgent().captured_pieces(state, Move(0, selected))
+                self.assertEqual([(p.player_id, p.piece_id, p.position) for p in captured], expected)
+                self.assertEqual(state, before)
+
     def test_deployment_or_protection(self):
         cases = (
             ("below halfway", [(0, 0, 26), (1, 0, 12)], 6, [(1,), (2,), (3,)]),

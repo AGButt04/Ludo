@@ -8,7 +8,7 @@ The provisional research question concerns how training opponents (fixed heurist
 ## Working style
 - Explain the purpose, syntax, and one concrete Ludo example before new implementation. Keep explanations brief and beginner-friendly.
 - The student normally writes the code. Review their work, fix errors in the requested portion, run relevant checks, and explain corrections. Do not implement future tasks unless asked.
-- Group new tasks into small connected sections. As requested November 15, explain assignments in chat and add concise purpose/steps/checks to `Infrastructure_Progress.md`. Understanding takes priority over deadlines; the student implements the personal agent one rule at a time.
+- Group new tasks into small connected sections. As requested November 16, explain assignments in chat and log completed work in `Infrastructure_Progress.md` afterward; do not pre-log new tasks. Understanding takes priority over deadlines; the student implements the personal agent one rule at a time.
 - Mark tasks complete only after checking the code and tests. After roughly 8–10 additional completed tasks, condense their descriptions into short progress rows.
 - Preserve the student's edits. Resolve routine coding details independently; ask about unresolved game rules before implementing behavior that depends on them.
 

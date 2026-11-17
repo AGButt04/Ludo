@@ -26,6 +26,39 @@ class PersonalAgent:
         
         return win_moves
     
+    # Emergency priority: Prevent an immediate opponent win.
+    def immediate_winning_threats(self, state):
+        winning_threats = []
+
+        if player_id is None:
+            player_id = state.current_player().player_id
+
+
+        for participant in state.players:
+            if has_won(state, participant.player_id):
+                return []
+
+        for index, opponent in enumerate(state.players):
+            if opponent.player_id == player_id:
+                continue
+            
+            copy_state = deepcopy(state)
+            copy_state.current_player_index = index
+            copy_state.remaining_rolls = []
+
+            for roll in range(1, 7):
+                copy_state.dice_roll = roll
+                moves = legal_moves(copy_state, roll)
+
+                for move in moves:
+                    result_state = self.simulate_move(copy_state, move)
+
+                    if has_won(result_state, opponent.player_id):
+                        winning_threats.append((opponent.player_id, roll))
+                        break
+        
+        return winning_threats
+    
     # Rule-2:
     def capture_threats(self, state, player_id, piece_id) -> list[tuple[int, int]]:
         player, pieces = get_move_pieces(
@@ -140,4 +173,32 @@ class PersonalAgent:
         # Deployment unavailable
         return self.protective_moves(state, moves)
 
+    # Rule-4:
+    def captured_pieces(self, state, move):
+        after = self.simulate_move(state, move)
+        captured = []
 
+        for player in state.players:
+            if player.player_id == move.player_id:
+                continue
+            
+            for piece in player.pieces:
+                _, pieces_after = get_move_pieces(
+                    after, Move(player.player_id, (piece.piece_id, ))
+                )
+
+                if piece.position != YARD and pieces_after[0].position == YARD:
+                    captured.append(piece)
+            
+        return captured
+    
+    def capture_moves(self, state, moves):
+        capturing = []
+
+        for move in moves:
+            cap_pieces = self.captured_pieces(state, move)
+
+            if cap_pieces:
+                capturing.append(move)
+        
+        return capturing

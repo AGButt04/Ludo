@@ -1,6 +1,6 @@
 # Abdul's rule-based Ludo agent
 
-Updated November 16, 2026. Playing preferences; implementation status is tracked in Infrastructure_Progress.md.
+Updated November 17, 2026. Playing preferences; implementation status is tracked in Infrastructure_Progress.md.
 Goal: imitate Abdul's defensive, progress-focused style in a winner-only game.
 Strength must be tested; these are personal heuristics, not proven optimal rules.
 Use Rules.md for game mechanics. Discuss implementation separately, step by step.
@@ -28,6 +28,12 @@ Use Rules.md for game mechanics. Discuss implementation separately, step by step
 These numbers identify rules, not a complete priority ranking. Winning always
 comes first; the other preferences depend on context and the exceptions below.
 
+Agreed November 17: after checking for our own immediate win, check at each
+decision for opponents who can win with one legal move on a roll of 1–6,
+including pair finishes. Prevent such a win when possible before ordinary
+preferences. This is a possible win, not a guaranteed roll or a full-turn forecast.
+How to choose between partial interventions against multiple threats remains open.
+
 1. **Win immediately.** Finish the fourth piece whenever possible.
 
 2. **Protect what can actually be saved.** Among pieces whose threats can be
@@ -45,6 +51,9 @@ comes first; the other preferences depend on context and the exceptions below.
    for an unthreatened piece; capturing a newly released piece does not.
    Accept risk when necessary to stop a near-winner and preserve a chance of first
    place. Entering the private lane is not itself winning.
+   With equally safe capture choices, prefer a pair over a single, even a more
+   advanced single: both captured pieces must redeploy. Preventing an immediate
+   opponent win takes precedence over capturing a different opponent's pair.
 
 5. **Secure private-lane entry.** Prefer entry over ordinary safe advancement or
    grouping, unless protection or a valuable capture takes priority. Do not keep
@@ -81,7 +90,8 @@ comes first; the other preferences depend on context and the exceptions below.
 Do not silently invent priorities or weights for these cases:
 
 - Valuable capture versus deployment when both are available.
-- What qualifies as urgent intervention against a near-winner.
+- Urgency beyond the agreed single-roll winning-threat model, and partial
+  intervention when multiple immediate winning threats cannot all be removed.
 - Partial safety improvement: fewer threats, but not complete safety.
 - How to measure a blockade's usefulness; when to split one no longer useful.
 - Any remaining conflicts between rules. No general random-action percentage agreed.

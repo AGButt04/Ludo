@@ -134,8 +134,20 @@ Finish the planned manual review and address demonstrated bugs. Next development
 2. Add `deployment_or_protection(self, state, moves)`. Find deployment moves. If available, return protective moves for positions 27+ when any exist; otherwise return deployment moves. If deployment is unavailable, return ordinary protective moves.
 **Checks:** Threshold filtering, unsavable advanced piece, deployment unavailable, neither option, unchanged inputs, existing Rule 2 tests. Boundary agreed November 16: `(position - 1) / 51`, so 26 is below halfway and 27 above. Immediate wins remain higher priority in later integration; capture conflicts, urgency, ties, and full-turn planning remain separate.
 
+## Task 39 — Personal agent: identify captured pieces
+
+**Status:** Complete. `captured_pieces(state, move)` returns opponents' original pieces that go from outside the yard to the yard in a simulated move. Single/pair captures, safe-square coexistence, existing yard pieces, original progress, and unchanged state verified. All 84 tests pass. Capture preferences remain pending.
+
+## Task 40 — Personal agent: list capturing moves
+
+**Status:** Complete. `capture_moves(state, moves)` filters supplied legal choices using `captured_pieces`. Mixed capturing/noncapturing choices, no captures, empty input, and unchanged inputs verified. All 85 tests pass. Ranking captures remains undecided.
+
+## Task 41 — Personal agent: detect immediate winning threats
+
+**Status:** Complete for detection. `immediate_winning_threats(state)` reports opponent/roll pairs with a legal one-move win, excluding the current player. Single/pair finishes, multiple opponents, non-winning states, ended games, and unchanged inputs verified. All 86 tests pass. Choosing preventive moves remains pending; comparisons after simulation must retain the original agent's perspective when the turn advances.
+
 ## Workflow
 
 Explain → student implements → review/fix → test. Keep chunks understandable, preserve the student's code ownership, and avoid repeating demo edits or adding speculative infrastructure. The user authorized this cleanup; useful tests and existing results are retained.
 
-November 15 preference: resume concise task instructions in this file alongside explanations in chat. Understanding takes priority over presentation deadlines.
+November 16 preference: explain new tasks in chat; log completed work here afterward. Understanding takes priority over presentation deadlines.
